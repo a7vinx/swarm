@@ -106,19 +106,21 @@ class MSwarm(object):
 		try:
 			s=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 			s.settimeout(self._args.timeout)
-			LOG.debug('connecting to %s:%d...'%(ip,port))
+			LOG.info('connecting to %s:%d...'%(ip,port))
 			s.connect((ip,port))
 			s.send(content)
 			s.close()
 			LOG.debug('connection to %s:%d close'%(ip,port))
 		except socket.timeout,e:
 			LOG.warning('%s:%d lost response'%(ip,port))
+		except socket.error,arg:
+			LOG.warning('socket error while connecting to %s:%d errno %d: %s'%(ip,port,arg[0],arg[1]))
 
 	def _send2one_r(self,content,ip,port,result):
 		try:
 			s=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 			s.settimeout(self._args.timeout)
-			LOG.debug('connecting to %s:%d...'%(ip,port))
+			LOG.info('connecting to %s:%d...'%(ip,port))
 			s.connect((ip,port))
 			s.send(content.replace('__EOF__','__EOF___'))
 			s.send('__EOF__')
@@ -130,5 +132,8 @@ class MSwarm(object):
 			LOG.debug('connection to %s:%d close'%(ip,port))
 		except socket.timeout,e:
 			LOG.warning('%s:%d lost response'%(ip,port))
+			return ''
+		except socket.error,arg:
+			LOG.warning('socket error while connecting to %s:%d errno %d: %s'%(ip,port,arg[0],arg[1]))
 			return ''
 

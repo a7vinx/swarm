@@ -26,6 +26,7 @@ def configfile_parse(args,config_file='swarm.conf'):
 
 	args.logfile=conf_parser.get("Output","logfile")
 	args.verbose=conf_parser.getboolean("Output","verbose")
+	args.disable_col=conf_parser.getboolean("Output","disable_col")
 
 	# args.threads=conf_parser.get("Optimization",threads)
 

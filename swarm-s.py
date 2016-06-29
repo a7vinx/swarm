@@ -15,7 +15,7 @@ def main():
 		parser.add_argument('-p',dest='s_port',metavar='LISTEN PORT',type=int,
 			help="Listen port to receive info from master")
 		args=parser.parse_args()
-		init_logger('log',True)
+		init_logger('log',True,False)
 
 		sswarm=SSwarm(args.s_port)
 		# parse arguments from mswarm

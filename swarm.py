@@ -18,7 +18,7 @@ def main():
 	try:
 		configfile_parse(args)
 		# cli_parse(args)
-		init_logger(args.logfile,args.verbose)
+		init_logger(args.logfile,args.verbose,args.disable_col)
 
 		m=MSwarm(args)
 		# wake slaves up
