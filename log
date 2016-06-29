@@ -1,0 +1,25 @@
+29 Jun 2016 10:50:18 logger.py[line:27] [in func:init_logger] DEBUG logger init completed
+29 Jun 2016 10:51:05 logger.py[line:27] [in func:init_logger] DEBUG logger init completed
+29 Jun 2016 10:51:42 sswarm.py[line:22] [in func:get_parse_args] DEBUG receive args from master host...
+29 Jun 2016 10:51:42 sswarm.py[line:60] [in func:_parse_args] DEBUG key: m_addr, value: 192.168.7.254
+29 Jun 2016 10:51:42 sswarm.py[line:60] [in func:_parse_args] DEBUG key: m_port, value: 13110
+29 Jun 2016 10:51:42 sswarm.py[line:60] [in func:_parse_args] DEBUG key: authkey, value: 13111
+29 Jun 2016 10:51:42 sswarm.py[line:36] [in func:get_parse_args] DEBUG complete parsing args
+29 Jun 2016 12:11:57 logger.py[line:27] [in func:init_logger] DEBUG logger init completed
+29 Jun 2016 12:11:57 sswarm.py[line:20] [in func:get_parse_args] DEBUG listen on port:13112
+29 Jun 2016 12:11:58 sswarm.py[line:23] [in func:get_parse_args] DEBUG receive args from master host...
+29 Jun 2016 12:11:58 sswarm.py[line:60] [in func:_parse_args] DEBUG key: m_addr, value: 192.168.7.22
+29 Jun 2016 12:11:58 sswarm.py[line:60] [in func:_parse_args] DEBUG key: m_port, value: 13119
+29 Jun 2016 12:11:58 sswarm.py[line:60] [in func:_parse_args] DEBUG key: authkey, value: auth
+29 Jun 2016 12:11:58 sswarm.py[line:37] [in func:get_parse_args] DEBUG complete parsing args
+29 Jun 2016 12:11:58 sswarm.py[line:47] [in func:get_do_task] DEBUG begin to get and do task...
+29 Jun 2016 12:11:58 sswarm.py[line:50] [in func:get_do_task] DEBUG request
+29 Jun 2016 12:11:58 sswarm.py[line:50] [in func:get_do_task] DEBUG request
+29 Jun 2016 12:11:58 sswarm.py[line:50] [in func:get_do_task] DEBUG request
+29 Jun 2016 12:11:58 sswarm.py[line:50] [in func:get_do_task] DEBUG request
+29 Jun 2016 12:11:58 sswarm.py[line:50] [in func:get_do_task] DEBUG request
+29 Jun 2016 12:11:58 sswarm.py[line:50] [in func:get_do_task] DEBUG request
+29 Jun 2016 12:11:58 sswarm.py[line:50] [in func:get_do_task] DEBUG request
+29 Jun 2016 12:11:58 sswarm.py[line:50] [in func:get_do_task] DEBUG request
+29 Jun 2016 12:11:58 sswarm.py[line:50] [in func:get_do_task] DEBUG request
+29 Jun 2016 12:11:58 sswarm.py[line:50] [in func:get_do_task] DEBUG request
