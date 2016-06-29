@@ -1,2 +1,2 @@
 # swarm #
-An automatic penetration Tool.
+An automatic distributed penetration Tool.
