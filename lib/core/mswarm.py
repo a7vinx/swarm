@@ -29,12 +29,23 @@ class MSwarm(object):
 		if self._args.waken_cmd!='':
 			LOG.info('sending waken command "%s"to swarm...'%(self._args.waken_cmd.replace('PORT','-p %d'%self._args.s_port)))
 			self._send2slave(self._args.waken_cmd.replace('PORT','-p %d'%self._args.s_port))
+		# time for slave host to create listen on target port
 		time.sleep(1)
 		s_args=self._parse_args_for_swarm()
-		r=self._send2swarm_r(s_args)
-		
-		LOG.info('waken %d slaves in swarm'%(len(r)))
 	
+		if self._args.sync_data==True:
+			s_args+='__SYNC__'
+		else:
+			s_args+='__CEND__'
+		r=self._send2swarm_r(s_args)
+		LOG.info('waken %d slaves in swarm'%(len(r)))
+		
+		# do data sync here
+		if self._args.sync_data==True:	
+			LOG.info('begin to synchronize data...')
+			self._sync_data()
+			LOG.info('data synchronize completed')
+
 	def parse_distribute_task(self):
 		self._manager=SwarmManager(address=('', self._args.m_port), 
 			authkey=self._args.authkey)
@@ -42,10 +53,10 @@ class MSwarm(object):
 		self._task_queue = self._manager.get_task_queue()
 		self._result_queue = self._manager.get_result_queue()
 		LOG.info('begin to parse task...')
+		
 		for i in range(0,20):
 			self._task_queue.put('request')
 			LOG.debug(self._result_queue.get())
-
 
 	def scan_domain():
 		# self._task_queue.put(something)
@@ -83,6 +94,12 @@ class MSwarm(object):
 		s+=','
 		return s
 
+	def _sync_data(self):
+		self._send2swarm_r('sync')
+		self._send2swarm_r('sync')
+		# TODO: do data sync here
+		pass
+
 	def _send2swarm_r(self,content):
 		ret=[]
 		for index in range(0,len(self._swarm_list)):
@@ -110,7 +127,7 @@ class MSwarm(object):
 			s.connect((ip,port))
 			s.send(content)
 			s.close()
-			LOG.debug('connection to %s:%d close'%(ip,port))
+			LOG.info('connection to %s:%d close'%(ip,port))
 		except socket.timeout,e:
 			LOG.warning('%s:%d lost response'%(ip,port))
 		except socket.error,arg:
