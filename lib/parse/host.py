@@ -1,15 +1,16 @@
 #!/user/bin/python
 # -*- coding: utf-8 -*-
 
+import socket
 from IPy import IP
 from lib.core.logger import LOG
-from socket import getaddrinfo
-from socket import gaierror
+
 
 
 def getlist(**t):
 	"""
-	return integrated ip list from target list and file
+	return integrated ip and domain name list from target list and file, 
+	with network segment parsed
 	"""
 	try:
 		LOG.info('begin to parse target list')
@@ -24,14 +25,14 @@ def getlist(**t):
 			targets=f.read()
 			iplist.extend(targets.splitlines())
 			f.close()
-		# unite and check
-		iplist=_unite_iplist(iplist)
+		# parse network segment and check
+		iplist=_unite_list(iplist)
 		LOG.info('parse completed')
 		return iplist
 	except ValueError, e:
 		LOG.error('invalid target')
 		raise
-	except gaierror, e:
+	except socket.gaierror, e:
 		LOG.error('invalid target')
 		raise 
 	except IOError, e:
@@ -40,8 +41,8 @@ def getlist(**t):
 
 def getswarmlist(**t):
 	"""
-	return integrated ip&port list from swarm list and file 
-	like ['127.0.0.1',80,'127.0.0.2',81]
+	return integrated ip and domain name list with port list from swarm list and file 
+	like (['127.0.0.1','127.0.0.2','google.com'],[80,90,90])
 	"""
 	try:
 		LOG.info('begin to parse swarm list')
@@ -64,7 +65,7 @@ def getswarmlist(**t):
 	except ValueError, e:
 		LOG.error('invalid swarm target')
 		raise
-	except gaierror, e:
+	except socket.gaierror, e:
 		LOG.error('invalid swarm target')
 		raise
 	except IndexError, e:
@@ -73,6 +74,27 @@ def getswarmlist(**t):
 	except IOError, e:
 		LOG.error('can not open swarm file')
 		raise 
+
+def getiplist(srclist):
+	"""
+	return a complete ip list without domain name in it
+	"""
+	ret=[]
+	for cur in srclist:
+		ret.extend(_ipname2ip(cur))
+	return ret
+
+def removeip(srclist):
+	"""
+	remove ip in src(domain name or ip) list
+	"""
+	ret=[]
+	for cur in srclist:
+		try:
+			IP(cur)
+		except ValueError, e:	
+			ret.append(cur)
+	return ret
 
 def _unite_swarmlist(rawlist):
 	"""
@@ -87,17 +109,16 @@ def _unite_swarmlist(rawlist):
 			raise ValueError('port format error')
 
 		ip=ipport[0]
-		ipl=_try_name2ip(ip)
-		for x in ipl:
-			# add into another list
-			retip.append(x)
-			retport.append(int(port,10))
+		# do check 
+		_try_ipname2ip(ip)
+		retip.append(ip)
+		retport.append(int(port,10))
 	return (retip,retport)
 
 
-def _unite_iplist(srclist):
+def _unite_list(srclist):
 	"""
-	convert srclist into ip list without domain name and network segment
+	convert srclist into ip and domain name list without network segment
 	"""
 	ret=[]
 	# can not use enumetrate() here
@@ -106,25 +127,10 @@ def _unite_iplist(srclist):
 		if cur.find('/')!=-1:
 			ret.extend(_seg2iplist(cur))
 		else:
-			ret.extend(_try_name2ip(cur))
+			# just do check
+			_try_ipname2ip(cur)
+			ret.append(cur)
 	return ret
-
-def _try_name2ip(src):
-	"""
-	convert src (domain name or ip) into ip list and do check meanwhile
-	"""
-	try:
-		ret=[]
-		ret.append(IP(src).strNormal())
-		return ret
-	# maybe it is a domain name so we have a try
-	except ValueError, e:
-		ret=[]
-		tmp=getaddrinfo(src,None)
-		for cur in tmp:
-			ret.append(cur[4][0])
-		return {}.fromkeys(ret).keys()
-	
 
 def _seg2iplist(seg):
 	iplist=[]
@@ -133,6 +139,28 @@ def _seg2iplist(seg):
 		iplist.append(x.strNormal())
 	return iplist
 
+def _ipname2ip(src):
+	"""
+	convert src (domain name or ip) into ip list and do check meanwhile
+	"""
+	try:
+		retip=[]
+		retip.append(IP(src).strNormal())
+		return retip
+	# maybe it is a domain name so we have a try
+	except ValueError, e:
+		retip=[]
+		tmp=socket.getaddrinfo(src,None)
+		for cur in tmp:
+			retip.append(cur[4][0])
+		return {}.fromkeys(retip).keys()
+
+def _try_ipname2ip(src):
+	try:
+		IP(src)
+	except ValueError, e:
+		# maybe it is a domain name so we have a try
+		socket.getaddrinfo(src,None)
 
 	
 

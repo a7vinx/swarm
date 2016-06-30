@@ -43,6 +43,24 @@ class SSwarm(object):
 		# ready
 		# while True:
 		# 	pass
+		
+	def do_domain_scan():
+		pass
+
+	def do_dir_scan():
+		pass
+
+	def do_web_vul_scan():
+		pass
+
+	def do_host_vul_scan():
+		pass
+
+	def do_try_exp():
+		pass
+
+	def do_try_post_exp():
+		pass
 
 	def _parse_args(self,args):
 		l=args.split(',')
@@ -59,24 +77,6 @@ class SSwarm(object):
 		print self._receive_master()
 		print self._receive_master()
 		# TODO: do data sync here
-		pass
-		
-	def _do_domain_scan():
-		pass
-
-	def _do_dir_scan():
-		pass
-
-	def _do_web_vul_scan():
-		pass
-
-	def _do_host_vul_scan():
-		pass
-
-	def _do_try_exp():
-		pass
-
-	def _do_try_post_exp():
 		pass
 
 	def _receive_master(self):

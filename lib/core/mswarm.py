@@ -8,6 +8,8 @@ from threading import Thread
 from lib.core.swarm_manager import SwarmManager
 from lib.parse.host import getlist
 from lib.parse.host import getswarmlist
+from lib.parse.host import removeip
+from lib.parse.host import getiplist
 from lib.core.logger import LOG
 
 
@@ -53,14 +55,39 @@ class MSwarm(object):
 		self._task_queue = self._manager.get_task_queue()
 		self._result_queue = self._manager.get_result_queue()
 		LOG.info('begin to parse task...')
-		
+
+
+		if self._args.enable_domain_scan==True:
+			self.scan_domain()
+
+
 		for i in range(0,20):
 			self._task_queue.put('request')
 			LOG.debug(self._result_queue.get())
 
-	def scan_domain():
-		# self._task_queue.put(something)
-		pass
+	def scan_domain(self):
+		"""
+		"""
+
+
+		# if self._args.domain_compbrute==True:
+
+		# else:
+		# 	try:
+		# 		# get total number of dictionary lines
+		# 		with open(self._args.domain_dict) as fp:
+		# 			sumline=sum(1 for i in fp)
+
+		# 		cur_index=0
+		# 		while True:
+		# 			task='__doms__'
+		# 			task+=
+		# 		self._task_queue.put()
+
+		# 	except IOError, e:
+		# 		LOG.error('can not open dictionary for domain scan, path:%s'%(self._args.domain_dict))
+		# 		raise
+			
 
 	def scan_dir():
 		pass
