@@ -4,23 +4,21 @@
 import socket
 from IPy import IP
 from lib.core.logger import LOG
+from lib.core.exception import SwarmUseException
+from lib.core.exception import SwarmNetException
 
-
-
-def getlist(**t):
+def getlist(target='',target_file=''):
 	"""
-	return integrated ip and domain name list from target list and file, 
-	with network segment parsed
+	Return integrated ip and domain name list from target list and file, 
+	with network segment parsed.
 	"""
 	try:
 		LOG.info('begin to parse target list')
 		iplist=[]
-		if t['target']!='':
-			target=t['target']
+		if target!='':
 			iplist.extend(target)
 
-		if t['target_file']!='':
-			target_file=t['target_file']
+		if target_file!='':
 			f=open(target_file,'r')
 			targets=f.read()
 			iplist.extend(targets.splitlines())
@@ -29,32 +27,30 @@ def getlist(**t):
 		iplist=_unite_list(iplist)
 		LOG.info('parse completed')
 		return iplist
-	except ValueError, e:
-		LOG.error('invalid target')
-		raise
-	except socket.gaierror, e:
-		LOG.error('invalid target')
-		raise 
+	except socket.timeout, e:
+		LOG.critical('time out when parsing target')		
+		raise SwarmNetException('time out when parsing target')
 	except IOError, e:
-		LOG.error('can not open target file')
-		raise 
+		LOG.critical('can not open target file')
+		raise SwarmUseException('can not open target file')
+	except Exception, e:
+		LOG.critical('invalid target or swarm address, or format error')
+		raise SwarmUseException('invalid target or swarm address, or format error')
 
-def getswarmlist(**t):
+def getswarmlist(swarm='',swarm_file=''):
 	"""
-	return integrated ip and domain name list with port list from swarm list and file 
-	like (['127.0.0.1','127.0.0.2','google.com'],[80,90,90])
+	Return integrated ip and domain name list with port list from swarm list and file 
+	like (['127.0.0.1','127.0.0.2','github.com'],[80,90,90]).
 	"""
 	try:
 		LOG.info('begin to parse swarm list')
 		rawlist=[]
 		iplist=[]
 		portlist=[]
-		if t['swarm']!='':
-			swarm=t['swarm']
+		if swarm!='':
 			rawlist.extend(swarm)
 
-		if t['swarm_file']!='':
-			swarm_file=t['swarm_file']
+		if swarm_file!='':
 			f=open(swarm_file,'r')
 			swarm=f.read()
 			rawlist.extend(swarm.splitlines())
@@ -62,22 +58,19 @@ def getswarmlist(**t):
 		iplist,portlist=_unite_swarmlist(rawlist)
 		LOG.info('parse completed')
 		return iplist,portlist
-	except ValueError, e:
-		LOG.error('invalid swarm target')
-		raise
-	except socket.gaierror, e:
-		LOG.error('invalid swarm target')
-		raise
-	except IndexError, e:
-		LOG.error('invalid swarm target')
-		raise
+	except socket.timeout, e:
+		LOG.critical('time out when parsing target')		
+		raise SwarmNetException('time out when parsing target')
 	except IOError, e:
-		LOG.error('can not open swarm file')
-		raise 
+		LOG.critical('can not open target file')
+		raise SwarmUseException('can not open target file')
+	except Exception, e:
+		LOG.critical('invalid target or swarm address, or format error')
+		raise SwarmUseException('invalid target or swarm address, or format error')
 
 def getiplist(srclist):
 	"""
-	return a complete ip list without domain name in it
+	Return a complete ip list without domain name in it.
 	"""
 	ret=[]
 	for cur in srclist:
@@ -86,7 +79,7 @@ def getiplist(srclist):
 
 def removeip(srclist):
 	"""
-	remove ip in src(domain name or ip) list
+	Remove ip in src(domain name or ip) list.
 	"""
 	ret=[]
 	for cur in srclist:
@@ -98,7 +91,7 @@ def removeip(srclist):
 
 def _unite_swarmlist(rawlist):
 	"""
-	convert rawlist into ip list without domain name
+	Convert rawlist into ip list without domain name.
 	"""
 	retip=[]
 	retport=[]
@@ -118,7 +111,7 @@ def _unite_swarmlist(rawlist):
 
 def _unite_list(srclist):
 	"""
-	convert srclist into ip and domain name list without network segment
+	Convert srclist into ip and domain name list without network segment.
 	"""
 	ret=[]
 	# can not use enumetrate() here
@@ -141,7 +134,7 @@ def _seg2iplist(seg):
 
 def _ipname2ip(src):
 	"""
-	convert src (domain name or ip) into ip list and do check meanwhile
+	Convert src (domain name or ip) into ip list and do check meanwhile.
 	"""
 	try:
 		retip=[]
@@ -161,9 +154,5 @@ def _try_ipname2ip(src):
 	except ValueError, e:
 		# maybe it is a domain name so we have a try
 		socket.getaddrinfo(src,None)
-
-	
-
-
 
 

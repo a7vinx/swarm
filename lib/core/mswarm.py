@@ -4,33 +4,39 @@
 import socket
 import time
 import multiprocessing
-from threading import Thread
+import Queue
+import threading 
 from lib.core.swarm_manager import SwarmManager
 from lib.parse.host import getlist
 from lib.parse.host import getswarmlist
 from lib.parse.host import removeip
 from lib.parse.host import getiplist
 from lib.core.logger import LOG
+from lib.core.exception import SwarmUseException
+from lib.utils.bfutils import generate_bflist
 
 
 class MSwarm(object):
-	"""docstring for MSwarm"""
+	"""
+	A role of master in the distributed system.
+	"""
 	def __init__(self, args):
 		self._args=args
-		self._target_list=getlist(**{'target':args.target,'target_file':args.target_file})
+		self._target_list=getlist(args.target,args.target_file)
 		
 		if args.waken_cmd!='':
-			self._swarm_list,self._swarm_port_list=getswarmlist(**{'swarm':args.swarm,'swarm_file':args.swarm_file})
+			self._swarm_list,self._swarm_port_list=getswarmlist(args.swarm,args.swarm_file)
 		else:
-			self._swarm_list=getlist(**{'target':args.swarm,'target_file':args.swarm_file})
+			self._swarm_list=getlist(args.swarm,args.swarm_file)
 
 	def waken_swarm(self):
 		"""
-		waken all slave hosts to run swarm-s.py and send args to them
+		Waken all slave hosts to run swarm-s.py and send args to them.
+		Synchronize data if need.
 		"""
 		if self._args.waken_cmd!='':
-			LOG.info('sending waken command "%s"to swarm...'%(self._args.waken_cmd.replace('PORT','-p %d'%self._args.s_port)))
-			self._send2slave(self._args.waken_cmd.replace('PORT','-p %d'%self._args.s_port))
+			LOG.info('sending waken command "%s"to swarm...'%(self._args.waken_cmd.replace('ARGS','-p %d'%self._args.s_port)))
+			self._send2slave(self._args.waken_cmd.replace('ARGS','-p %d'%self._args.s_port))
 		# time for slave host to create listen on target port
 		time.sleep(1)
 		s_args=self._parse_args_for_swarm()
@@ -61,35 +67,119 @@ class MSwarm(object):
 			self.scan_domain()
 
 
-		for i in range(0,20):
-			self._task_queue.put('request')
-			LOG.debug(self._result_queue.get())
+		self._shutdown()
 
 	def scan_domain(self):
 		"""
-		"""
+		Decomposition domain name scan task and distribute tasks, get result from swarm.
+		Task granularity should not be too small or too huge
+		Task format:
+		__doms__:task_index:domain name:dict:dict_path:start_line:scan_lines
+		__doms__:task_index:domain name:comp:charset:begin_str:end_str
+		Result format:
+		__doms__:task_index:result
+		Example:
+		put task:
+		__doms__:26:github.com:dict:2000:3000
+		__doms__:980:github.com:comp:ABCDEFGHIJKLMN8980:DAAA:D000
+		get result:
+		__doms__:980:gist.github.com;XX.github.com
+		__doms__:980:no subdomain
+		"""	
+		scan_result=[]
+		domain_list=removeip(self._target_list)
+		if len(domain_list)==0:
+			LOG.critical('domain name must be provided')
+			raise SwarmUseException('domain name must be provided')			
 
+		if self._args.domain_maxlevel<=0:
+			LOG.critical('subdomain name max level must be positive')
+			raise SwarmUseException('subdomain name max level must be positive')
 
-		# if self._args.domain_compbrute==True:
+		# begin to discomposition 
+		for curlevel in range(self._args.domain_maxlevel):	
+			self._init_task_statistics()
+			if self._args.domain_compbrute==True:
+				# parse interval of subdomain name length
+				try:
+					midindex=self._args.domain_levellen.find('-')
+					minlen=int(self._args.domain_levellen[:midindex],10)
+					maxlen=int(self._args.domain_levellen[midindex+1:],10)
+				except Exception, e:
+					LOG.critical('invalid subdomain name length interval, or format error')
+					raise SwarmUseException('invalid subdomain name length interval, or format error')
+				# parse char set
+				charset=self._parse_charset()
+				task_granularity=4
+				for cur_target in domain_list:
+					begin_str=''
+					if maxlen<task_granularity:
+						begin_str=minlen*charset[0]
+						end_str=maxlen*charset[-1]
+						task=':'.join([cur_target,'comp',charset,begin_str,end_str])
+						self._put_task('__doms__',task)
+						continue
 
-		# else:
-		# 	try:
-		# 		# get total number of dictionary lines
-		# 		with open(self._args.domain_dict) as fp:
-		# 			sumline=sum(1 for i in fp)
+					if minlen<task_granularity:
+						begin_str=minlen*charset[0]
+						end_str=(task_granularity-1)*charset[-1]
+						task=':'.join([cur_target,'comp',charset,begin_str,end_str])
+						self._put_task('__doms__',task)
 
-		# 		cur_index=0
-		# 		while True:
-		# 			task='__doms__'
-		# 			task+=
-		# 		self._task_queue.put()
+					bflist=generate_bflist(charset,charset[0],(maxlen-task_granularity+1)*charset[-1])
+					for pre_str in bflist:
+						begin_str=pre_str+(task_granularity-1)*charset[0]
+						end_str=pre_str+(task_granularity-1)*charset[-1]
+						task=':'.join([cur_target,'comp',charset,begin_str,end_str])
+						self._put_task('__doms__',task)
+			# use dictionary 
+			else:
+				if self._args.domain_dict=='':
+					LOG.critical('domain name dictionary need to be provided')
+					raise SwarmUseException('domain name dictionary need to be provided')
 
-		# 	except IOError, e:
-		# 		LOG.error('can not open dictionary for domain scan, path:%s'%(self._args.domain_dict))
-		# 		raise
-			
+				try:
+					# get total number of dictionary lines
+					with open(self._args.domain_dict) as fp:
+						sumline=sum(1 for i in fp)
+				except IOError, e:
+					LOG.critical('can not open dictionary for domain scan, path:%s'%(self._args.domain_dict))
+					raise SwarmUseException('can not open dictionary for domain scan, path:%s'%(self._args.domain_dict))
 
+				task_granularity=1000
+				for cur_target in domain_list:
+					# begin from fisrt line
+					cur_line=1
+					while True:
+						# after next calculation, cur_line point to next start line 
+						if (cur_line+task_granularity)>sumline:
+							lines=sumline-cur_line+1
+						else:
+							lines=task_granularity
+						task=':'.join([cur_target,'dict',self._args.domain_dict,str(cur_line),str(lines)])
+						self._put_task('__doms__',task)
+						# update current line 
+						cur_line+=task_granularity
+						if cur_line>sumline:
+							break
+			# get scan result
+			domain_list=[]
+			self._prepare_get_result()
+			while True:
+				result=self._get_result()
+				if result=='':
+					break
+				if result!='no subdomain':
+					domain_list.extend(result.split(';'))
+				# update result list
+			scan_result.extend(domain_list)
+		# do report
+		LOG.info('scan result:%s'%scan_result)
+		return scan_result
+	
 	def scan_dir():
+		"""
+		"""
 		pass
 
 	def scan_web_vul():
@@ -104,12 +194,97 @@ class MSwarm(object):
 	def try_post_exp():
 		pass
 
+	def _shutdown(self):
+		if self._args.process_num==0:
+			# ensure all process can be notified
+			off_num=16
+		else:
+			off_num=self._args.process_num
+		for cur in range(len(self._swarm_list)*off_num):
+			self._task_queue.put('__off__:')
+		time.sleep(3)
+		self._manager.shutdown()
+
+	def _init_task_statistics(self):
+		# used for recording current task queue info 
+		self._cur_task_list=[]
+		self._task_confirm_list=[]
+		# start from 0 
+		self._cur_task_num=0
+		self._task_confirm_num=0
+
+	def _put_task(self,pre_str,task):
+		"""
+		Put task into task queue, update current task list and current task number meanwhile
+		"""
+		task=":".join([pre_str,str(self._cur_task_num),task])
+		LOG.debug('put task into queue:%s'%task)
+		self._task_queue.put(task)
+		self._cur_task_num+=1
+		self._cur_task_list.append(task)
+
+	def _prepare_get_result(self):
+		self._task_confirm_list=[0 for x in range(self._cur_task_num)]
+		self._task_confirm_num=0
+
+	def _get_result(self):
+		"""
+		Get result from result queue, do task index confirm meanwhile
+		Return '' if all tasks have been confirmed
+		"""
+		# check whether all task has been confirmed
+		# if so, return ''
+		if self._task_confirm_num==self._cur_task_num:
+			return ''
+		try:
+			task_result=self._result_queue.get(block=True,timeout=self._args.timeout)
+		except Queue.Empty, e:
+			# maybe some slave host has lost response
+			# put lost task again
+			for cur_index,cur in enumerate(self._task_confirm_list):
+				if cur==0:
+					self._task_queue.put(self._cur_task_list[cur_index])
+			time.sleep(5)
+			return self._get_result()
+		resultl=task_result.split(':') 
+		index=int(resultl[1],10)
+		result=resultl[2]
+		# do confirm
+		self._task_confirm_list[index]=1
+		self._task_confirm_num+=1
+		LOG.info('task index:%d scan result:%s'%(index,result))
+		return result	
+
+	def _parse_charset(self):
+		try:
+			charset=self._args.domain_charset
+			while True:
+				index=charset.find('-')
+				if index==-1:
+					break
+				begin_chr=charset[index-1]
+				end_chr=charset[index+1]
+				dst=''
+				for x in range(ord(begin_chr),ord(end_chr)+1):
+					dst+=chr(x)
+				charset=charset.replace(begin_chr+'-'+end_chr,dst)
+			ret = ''.join(x for i, x in enumerate(charset) if charset.index(x) == i) 
+			LOG.debug('charset: %s'%ret)
+			return ret
+		except Exception, e:
+			LOG.critical('invalid subdomain name charset, or format error')
+			# raise SwarmUseException('invalid subdomain name charset, or format error')
+			raise
+
 	def _parse_args_for_swarm(self):
 		s=''
 		s=self._put_key_value(s,'m_addr',self._args.m_addr)
 		s=self._put_key_value(s,'m_port',self._args.m_port)
 		s=self._put_key_value(s,'authkey',self._args.authkey)
-		# cut off the last ','
+		s=self._put_key_value(s,'process_num',self._args.process_num)
+		s=self._put_key_value(s,'thread_num',self._args.thread_num)
+		s=self._put_key_value(s,'domain_timeout',self._args.domain_timeout)
+		# remove the last ','
 		s=s[:-1]
 		LOG.debug('args pass to swarm-s: '+s)
 		return s
@@ -131,7 +306,7 @@ class MSwarm(object):
 		ret=[]
 		for index in range(0,len(self._swarm_list)):
 			LOG.info('starting thread %d to deal socket'%(index))
-			t=Thread(target=self._send2one_r,
+			t=threading.Thread(target=self._send2one_r,
 				args=(content,self._swarm_list[index],self._args.s_port,ret))
 			t.start()
 			t.join()
@@ -141,7 +316,7 @@ class MSwarm(object):
 	def _send2slave(self,content):
 		for index in range(0,len(self._swarm_list)):
 			LOG.info('starting thread %d to deal socket'%(index))
-			t=Thread(target=self._send2one,
+			t=threading.Thread(target=self._send2one,
 				args=(content,self._swarm_list[index],self._swarm_port_list[index]))
 			t.start()
 			t.join()
@@ -158,7 +333,7 @@ class MSwarm(object):
 		except socket.timeout,e:
 			LOG.warning('%s:%d lost response'%(ip,port))
 		except socket.error,arg:
-			LOG.warning('socket error while connecting to %s:%d errno %d: %s'%(ip,port,arg[0],arg[1]))
+			LOG.error('socket error while connecting to %s:%d errno %d: %s'%(ip,port,arg[0],arg[1]))
 
 	def _send2one_r(self,content,ip,port,result):
 		try:
@@ -171,13 +346,12 @@ class MSwarm(object):
 			r=s.recv(4096)
 			if r!='':
 				result.append(r)
-			# LOG.debug('receive from %s:%d: %s'%(ip,port,buff))
 			s.close()
 			LOG.debug('connection to %s:%d close'%(ip,port))
 		except socket.timeout,e:
 			LOG.warning('%s:%d lost response'%(ip,port))
 			return ''
 		except socket.error,arg:
-			LOG.warning('socket error while connecting to %s:%d errno %d: %s'%(ip,port,arg[0],arg[1]))
+			LOG.error('socket error while connecting to %s:%d errno %d: %s'%(ip,port,arg[0],arg[1]))
 			return ''
 

@@ -15,13 +15,17 @@ Directory Structure Of Swarm
 
 /exp
 
-/database	
+/dictionary
 
-/doc		
+/database	
 
 /thirdparty	
 
-/dictionary
+/doc		
+
+
+
+
 
 
 

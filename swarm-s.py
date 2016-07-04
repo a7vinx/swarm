@@ -12,20 +12,17 @@ import argparse
 def main():
 	try:
 		parser=argparse.ArgumentParser()
-		parser.add_argument('-p',dest='s_port',metavar='LISTEN PORT',type=int,
+		parser.add_argument('-p',dest='s_port',metavar='LISTEN PORT',type=int,required=True,
 			help="Listen port to receive info from master")
 		args=parser.parse_args()
 		init_logger('log',True,False)
 
 		sswarm=SSwarm(args.s_port)
-		# parse arguments from mswarm
+		# Parse arguments from mswarm
 		sswarm.get_parse_args()
-		# ready to get and exec command from master host
+		# Ready to get and exec command from master host
 		sswarm.get_do_task()
 
-	except timeout, e:
-		LOG.error("time out")
-		raise
 	except Exception, e:
 		raise 
 	

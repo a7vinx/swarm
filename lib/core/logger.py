@@ -26,10 +26,12 @@ def init_logger(logfile,verbose,disable_col):
 	else:
 		LOG.setLevel(logging.WARNING)
 
-	formatter = logging.Formatter('%(asctime)s %(filename)s[line:%(lineno)d] [in func:%(funcName)s] %(levelname)s %(message)s',
+	file_formatter = logging.Formatter('[%(asctime)s] %(filename)s[line:%(lineno)d] [in func:%(funcName)s] %(levelname)s %(message)s',
 			datefmt='%d %b %Y %H:%M:%S')
-	file_logger.setFormatter(formatter)
-	cli_logger.setFormatter(formatter)
+	cli_formatter = logging.Formatter('[%(asctime)s] %(filename)s[line:%(lineno)d] [in func:%(funcName)s] %(levelname)s %(message)s',
+			datefmt='%H:%M:%S')
+	file_logger.setFormatter(file_formatter)
+	cli_logger.setFormatter(cli_formatter)
 
 	LOG.addHandler(file_logger)
 	LOG.addHandler(cli_logger)
