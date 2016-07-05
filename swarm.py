@@ -9,6 +9,7 @@ from lib.parse.cli import cli_parse
 from lib.core.logger import LOG
 from lib.core.logger import init_logger
 from lib.core.mswarm import MSwarm
+from lib.core.exception import SwarmBaseException
 
 def main():
 		
@@ -23,8 +24,8 @@ def main():
 		m.waken_swarm()
 		m.parse_distribute_task()
 
-	except Exception, e:
-		raise
+	except SwarmBaseException, e:
+		return
 
 	
 

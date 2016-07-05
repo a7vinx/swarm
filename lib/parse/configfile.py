@@ -47,6 +47,6 @@ def configfile_parse(args,config_file='swarm.conf'):
 		args.domain_timeout=conf_parser.getfloat("Domain Scan","domain_timeout")
 
 	except Exception,e:
-		print 'parse config file error'
-		raise SwarmUseException('parse config file error')
+		print 'parse config file error :'+repr(e)
+		raise SwarmUseException('parse config file error'+repr(e))
 

@@ -2,12 +2,13 @@
 # -*- coding: utf-8 -*-
 
 
+import argparse
 from lib.core.sswarm import SSwarm
 from lib.core.logger import LOG
 from socket import timeout
 from lib.core.logger import init_logger
 from lib.core.logger import LOG
-import argparse
+from lib.core.exception import SwarmBaseException
 
 def main():
 	try:
@@ -23,8 +24,8 @@ def main():
 		# Ready to get and exec command from master host
 		sswarm.get_do_task()
 
-	except Exception, e:
-		raise 
+	except SwarmBaseException, e:
+		return 
 	
 if __name__=='__main__':
 	main()
