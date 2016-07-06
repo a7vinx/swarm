@@ -5,7 +5,7 @@ import socket
 import time
 import multiprocessing
 from lib.core.logger import LOG
-from lib.core.swarm_manager import SwarmManager
+from lib.core.swarm_manager import SSwarmManager
 from scanner.domainsc import DomainScanner
 
 class SSwarm(object):
@@ -44,36 +44,27 @@ class SSwarm(object):
 				p.start()
 				proc.append(p)
 		for cur in proc:
-			proc.join()
+			cur.join()
 		LOG.debug('task completed')
 
 	def _get_do_task_proc(self):
-		self._manager=SwarmManager(address=(self._args['m_addr'], self._args['m_port']),
+		self._manager=SSwarmManager(address=(self._args['m_addr'], self._args['m_port']),
 				authkey=self._args['authkey'])
-		self._manager.connect()
 
-		self._task_queue = self._manager.get_task_queue()
-		self._result_queue = self._manager.get_result_queue()
 		# init scanners and other modules
 		self._init_module()
 		LOG.debug('begin to get and do task...')
 	
 		while True:
-			task=self._task_queue.get()
-			LOG.debug('get task:%s'%task)
-			taskl=task.split(':')
-			task_flag=taskl[0]
-			task_index=taskl[1]
-			if task_flag=='__doms__':
-				result=self.do_domain_scan(taskl[2:])
+			flag,task=self._manager.get_task()
+			# take action according to flag
+			if flag=='__doms__':
+				result=self.do_domain_scan(task)
 			
-			elif task_flag=='__off__':
+			elif flag=='__off__':
 				break
 
-			result=":".join([task_flag,task_index,result])
-			LOG.debug('put result:%s'%result)
-			self._result_queue.put(result)
-
+			self._manager.put_result(result)
 
 	def do_domain_scan(self,task):
 		"""

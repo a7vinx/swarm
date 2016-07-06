@@ -4,9 +4,8 @@
 import socket
 import time
 import multiprocessing
-import Queue
 import threading 
-from lib.core.swarm_manager import SwarmManager
+from lib.core.swarm_manager import MSwarmManager
 from lib.parse.host import getlist
 from lib.parse.host import getswarmlist
 from lib.parse.host import removeip
@@ -55,13 +54,9 @@ class MSwarm(object):
 			LOG.info('data synchronize completed')
 
 	def parse_distribute_task(self):
-		self._manager=SwarmManager(address=('', self._args.m_port), 
+		self._manager=MSwarmManager(self._args.timeout,address=('', self._args.m_port), 
 			authkey=self._args.authkey)
-		self._manager.start()
-		self._task_queue = self._manager.get_task_queue()
-		self._result_queue = self._manager.get_result_queue()
 		LOG.info('begin to parse task...')
-
 
 		if self._args.enable_domain_scan==True:
 			self.scan_domain()
@@ -72,7 +67,7 @@ class MSwarm(object):
 	def scan_domain(self):
 		"""
 		Decomposition domain name scan task and distribute tasks, get result from swarm.
-		Task granularity should not be too small or too huge
+		Task granularity should not be too small or too huge.
 		Task format:
 		__doms__:task_index:domain name:dict:dict_path:start_line:scan_lines
 		__doms__:task_index:domain name:comp:charset:begin_str:end_str
@@ -98,7 +93,7 @@ class MSwarm(object):
 
 		# begin to discomposition 
 		for curlevel in range(self._args.domain_maxlevel):	
-			self._init_task_statistics()
+			self._manager.init_task_statistics()
 			if self._args.domain_compbrute==True:
 				# parse interval of subdomain name length
 				try:
@@ -117,21 +112,21 @@ class MSwarm(object):
 						begin_str=minlen*charset[0]
 						end_str=maxlen*charset[-1]
 						task=':'.join([cur_target,'comp',charset,begin_str,end_str])
-						self._put_task('__doms__',task)
+						self._manager.put_task('__doms__',task)
 						continue
 
 					if minlen<task_granularity:
 						begin_str=minlen*charset[0]
 						end_str=(task_granularity-1)*charset[-1]
 						task=':'.join([cur_target,'comp',charset,begin_str,end_str])
-						self._put_task('__doms__',task)
+						self._manager.put_task('__doms__',task)
 
 					bflist=generate_bflist(charset,charset[0],(maxlen-task_granularity+1)*charset[-1])
 					for pre_str in bflist:
 						begin_str=pre_str+(task_granularity-1)*charset[0]
 						end_str=pre_str+(task_granularity-1)*charset[-1]
 						task=':'.join([cur_target,'comp',charset,begin_str,end_str])
-						self._put_task('__doms__',task)
+						self._manager.put_task('__doms__',task)
 			# use dictionary 
 			else:
 				if self._args.domain_dict=='':
@@ -157,16 +152,16 @@ class MSwarm(object):
 						else:
 							lines=task_granularity
 						task=':'.join([cur_target,'dict',self._args.domain_dict,str(cur_line),str(lines)])
-						self._put_task('__doms__',task)
+						self._manager.put_task('__doms__',task)
 						# update current line 
 						cur_line+=task_granularity
 						if cur_line>sumline:
 							break
 			# get scan result
 			domain_list=[]
-			self._prepare_get_result()
+			self._manager.prepare_get_result()
 			while True:
-				result=self._get_result()
+				result=self._manager.get_result()
 				if result=='':
 					break
 				if result!='no subdomain':
@@ -201,59 +196,9 @@ class MSwarm(object):
 		else:
 			off_num=self._args.process_num
 		for cur in range(len(self._swarm_list)*off_num):
-			self._task_queue.put('__off__:')
+			self._manager.put_task('__off__:','')
 		time.sleep(3)
 		self._manager.shutdown()
-
-	def _init_task_statistics(self):
-		# used for recording current task queue info 
-		self._cur_task_list=[]
-		self._task_confirm_list=[]
-		# start from 0 
-		self._cur_task_num=0
-		self._task_confirm_num=0
-
-	def _put_task(self,pre_str,task):
-		"""
-		Put task into task queue, update current task list and current task number meanwhile
-		"""
-		task=":".join([pre_str,str(self._cur_task_num),task])
-		LOG.debug('put task into queue:%s'%task)
-		self._task_queue.put(task)
-		self._cur_task_num+=1
-		self._cur_task_list.append(task)
-
-	def _prepare_get_result(self):
-		self._task_confirm_list=[0 for x in range(self._cur_task_num)]
-		self._task_confirm_num=0
-
-	def _get_result(self):
-		"""
-		Get result from result queue, do task index confirm meanwhile
-		Return '' if all tasks have been confirmed
-		"""
-		# check whether all task has been confirmed
-		# if so, return ''
-		if self._task_confirm_num==self._cur_task_num:
-			return ''
-		try:
-			task_result=self._result_queue.get(block=True,timeout=self._args.timeout)
-		except Queue.Empty, e:
-			# maybe some slave host has lost response
-			# put lost task again
-			for cur_index,cur in enumerate(self._task_confirm_list):
-				if cur==0:
-					self._task_queue.put(self._cur_task_list[cur_index])
-			time.sleep(5)
-			return self._get_result()
-		resultl=task_result.split(':') 
-		index=int(resultl[1],10)
-		result=resultl[2]
-		# do confirm
-		self._task_confirm_list[index]=1
-		self._task_confirm_num+=1
-		LOG.info('task index:%d scan result:%s'%(index,result))
-		return result	
 
 	def _parse_charset(self):
 		try:
