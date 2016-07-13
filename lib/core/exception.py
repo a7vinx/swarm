@@ -10,3 +10,5 @@ class SwarmUseException(SwarmBaseException):
 class SwarmNetException(SwarmBaseException):
 	pass
 
+class SwarmParseException(SwarmBaseException):
+	pass

@@ -14,6 +14,7 @@ def init_logger(logfile,verbose,disable_col):
 		try:
 			from thirdparty.ansistrm.ansistrm import ColorizingStreamHandler
 			cli_logger = ColorizingStreamHandler(sys.stdout)
+			cli_logger.level_map[logging.DEBUG]=(None, 'white', False)
 			cli_logger.level_map[logging.INFO]=(None, 'green', False)
 		except ImportError:
 			print 'import error'

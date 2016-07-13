@@ -44,7 +44,7 @@ class MSwarmManager(SwarmManager):
 		"""
 		Put task into task queue, update current task list and current task number meanwhile.
 		"""
-		task=":".join([pre_str,str(self._cur_task_num),task])
+		task="|".join([pre_str,str(self._cur_task_num),task])
 		LOG.debug('put task into queue:%s'%task)
 		self._task_queue.put(task)
 		self._cur_task_num+=1
@@ -70,13 +70,17 @@ class MSwarmManager(SwarmManager):
 			# put lost task again
 			for cur_index,cur in enumerate(self._task_confirm_list):
 				if cur==0:
+					LOG.debug('put task into queue:%s'%self._cur_task_list[cur_index])
 					self._task_queue.put(self._cur_task_list[cur_index])
 			time.sleep(5)
 			return self.get_result()
-		resultl=task_result.split(':') 
+		resultl=task_result.split('|') 
 		index=int(resultl[1],10)
 		result=resultl[2]
 		# do confirm
+		# if it is duplicate, try to get result again
+		if self._task_confirm_list[index]!=0:
+			return self.get_result()
 		self._task_confirm_list[index]=1
 		self._task_confirm_num+=1
 		LOG.info('task index:%d result:%s'%(index,result))
@@ -102,14 +106,14 @@ class SSwarmManager(SwarmManager):
 	def get_task(self):
 		task=self._task_queue.get()
 		LOG.debug('get task:%s'%task)
-		taskl=task.split(':')
+		taskl=task.split('|')
 		self._cur_task_flag=taskl[0]
 		self._cur_task_index=taskl[1]
 		task=taskl[2:]
 		return self._cur_task_flag,task
 
 	def put_result(self,result):
-		result=":".join([self._cur_task_flag,self._cur_task_index,result])
+		result="|".join([self._cur_task_flag,self._cur_task_index,result])
 		LOG.debug('put result:%s'%result)
 		self._result_queue.put(result)
 
