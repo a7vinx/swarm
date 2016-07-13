@@ -56,21 +56,37 @@ class MSwarm(object):
 			LOG.info('data synchronize completed')
 
 	def parse_distribute_task(self):
+		# do some common check here
+		if self._args.task_granularity<0 or self._args.task_granularity>3:
+			LOG.critical('invalid task granularity, it should be one number of 1-3')
+			raise SwarmUseException('invalid task granularity, it should be one number of 1-3')
+		
+		if self._args.process_num<0:
+			LOG.critical('process number can not be negative')
+			raise SwarmUseException('process number can not be negative')
+		if self._args.thread_num<=0:
+			LOG.critical('thread number should be positive')
+			raise SwarmUseException('thread number should be positive')
+
+		# start the manager
 		self._manager=MSwarmManager(self._args.timeout,address=('', self._args.m_port), 
 			authkey=self._args.authkey)
 		LOG.info('begin to parse task...')
+
 		# scan subdomain name
 		if self._args.enable_domain_scan==True:
 			result=self.scan_domain(targetl=self._target_list,maxlevel=self._args.domain_maxlevel,
 				compbrute=self._args.domain_compbrute,dict=self._args.domain_dict,
-				charset=self._args.domain_charset,levellen=self._args.domain_levellen)
+				charset=self._args.domain_charset,levellen=self._args.domain_levellen,
+				task_granularity=self._args.task_granularity)
 		# scan directory and file
 		if self._args.enable_dir_scan==True:
 			result=self.scan_dir(targetl=self._target_list,enable_crawler=self._args.dir_enable_crawler,
 				crawl_seed=self._args.dir_crawl_seed,http_port=self._args.dir_http_port,
 				https_port=self._args.dir_https_port,enable_brute=self._args.dir_enable_brute,
 				maxdepth=self._args.dir_max_depth,compbrute=self._args.dir_compbrute,
-				dict=self._args.dir_dict,charset=self._args.dir_charset,dirlen=self._args.dir_len)
+				dict=self._args.dir_dict,charset=self._args.dir_charset,dirlen=self._args.dir_len,
+				task_granularity=self._args.task_granularity)
 			draw_sitemap(result)
 		# scan web vulnerabilities
 		if self._args.enable_web_vul_scan==True:
@@ -78,7 +94,7 @@ class MSwarm(object):
 
 		self._shutdown()
 
-	def scan_domain(self,targetl,maxlevel,compbrute,dict,charset,levellen):
+	def scan_domain(self,targetl,maxlevel,compbrute,dict,charset,levellen,task_granularity):
 		"""
 		Decomposition domain name scan task and distribute tasks, get result from swarm.
 		Task granularity should not be too small or too huge.
@@ -124,7 +140,6 @@ class MSwarm(object):
 			self._manager.init_task_statistics()
 			if compbrute==True:				
 				try:
-					task_granularity=4
 					# generate list of subtasks
 					subtasklist=self._generate_compbrute_subtask(domain_list,levellen,charset,
 						task_granularity)
@@ -140,7 +155,6 @@ class MSwarm(object):
 					raise SwarmUseException('domain name dictionary need to be provided')
 
 				try:
-					task_granularity=1000
 					# generate list of subtasks
 					subtasklist=self._generate_dictbrute_subtask(domain_list,dict,task_granularity)
 					for cursubtask in subtasklist:
@@ -171,7 +185,7 @@ class MSwarm(object):
 		return scan_result
 
 	def scan_dir(self,targetl,enable_crawler,crawl_seed,http_port,https_port,enable_brute,maxdepth,
-		compbrute,dict,charset,dirlen):
+				compbrute,dict,charset,dirlen,task_granularity):
 		"""
 		Decomposition directory and file scan task and distribute tasks, get result from swarm.
 		Task granularity should not be too small or too huge.
@@ -252,7 +266,6 @@ class MSwarm(object):
 				self._manager.init_task_statistics()
 				if compbrute==True:
 					try:
-						task_granularity=4
 						# generate list of subtasks 
 						subtasklist=self._generate_compbrute_subtask(url_list,dirlen,charset,task_granularity)
 						for cursubtask in subtasklist:
@@ -265,7 +278,6 @@ class MSwarm(object):
 						LOG.critical('directory dictionary need to be provided')
 						raise SwarmUseException('directory dictionary need to be provided')
 					try:
-						task_granularity=1000
 						# generate list of subtasks
 						subtasklist=self._generate_dictbrute_subtask(url_list,dict,task_granularity)
 						for cursubtask in subtasklist:
@@ -347,6 +359,9 @@ class MSwarm(object):
 		pass	
 
 	def _generate_compbrute_subtask(self,targetlist,len_interval,charset,granularity):
+		# convert granularity
+		granularity+=2
+
 		# parse interval of subdomain name length
 		minlen,maxlen=self._parse_digital_interval(len_interval)
 		# parse char set
@@ -377,6 +392,9 @@ class MSwarm(object):
 		return subtasklist
 
 	def _generate_dictbrute_subtask(self,targetlist,dict_path,granularity):
+		# convert granularity
+		granularity=10**(granularity+1)
+
 		# get total number of dictionary lines
 		with open(dict_path) as fp:
 			sumline=sum(1 for i in fp)

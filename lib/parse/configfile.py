@@ -36,6 +36,7 @@ def configfile_parse(args,config_file='swarm.conf'):
 		# common options
 		args.process_num=conf_parser.getint('Common','process_num')
 		args.thread_num=conf_parser.getint('Common','thread_num')
+		args.task_granularity=conf_parser.getint('Common','task_granularity')
 
 		# domain scan options
 		args.enable_domain_scan=conf_parser.getboolean('Domain Scan','enable_domain_scan')
