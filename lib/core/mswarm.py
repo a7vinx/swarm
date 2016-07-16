@@ -235,16 +235,25 @@ class MSwarm(object):
 		# target port. Then initial scan_result use port scan result.
 		# It should prepare a dict contains valid targets like:
 		# 
-		# {'http://github.com:80':['/',],
-		#  'https://github.com:443':['/',]}
+		# {'http://github.com:81':['/',],
+		#  'http://XX.com':['/',],
+		#  'https://github.com:9090':['/',],
+		#  'https://XX.com':['/',]}
 		port_result=self.scan_host(targetl=targetl,enable_port_scan=True,
 			ports=(http_port+'|'+https_port).strip('|'))
-
+		# prepare result dict
 		scan_result={}
 		for curhost in port_result:
 			for curport,portstatus in port_result[curhost].iteritems():
 				if portstatus[1] in ['http','https']:
-					scan_result[portstatus[1]+'://'+curhost+':'+str(curport)]=['/',]
+					# if service http use port 80, leave out the port
+					if portstatus[1]=='http' and curport==80:
+						scan_result[portstatus[1]+'://'+curhost]=['/',]
+					# if service https use port 443, leave out the port
+					elif portstatus[1]=='https' and curport==443:
+						scan_result[portstatus[1]+'://'+curhost]=['/',]
+					else:
+						scan_result[portstatus[1]+'://'+curhost+':'+str(curport)]=['/',]
 
 		if enable_brute:
 			if maxdepth<0:
