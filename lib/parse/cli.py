@@ -1,10 +1,16 @@
-#!/user/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
 import argparse
+import importlib
 from lib.core.exception import SwarmUseException
+from lib.core.exception import SwarmModuleException
 
 def cli_parse(args):
 	parser=argparse.ArgumentParser()
+
+	parser.add_argument('-m',dest='mod',metavar='MODULE',required=True,
+			help='Choose one module to use')
 
 	# output option
 	output=parser.add_argument_group('Output',
@@ -57,32 +63,21 @@ def cli_parse(args):
 	common.add_argument('--thread',dest='thread_num',metavar='NUM',type=int,
 			help='Number of threads running on slave host')
 
-	# domain scan option
-	domain_scan=parser.add_argument_group('Domain Scan',
-		'Thes option can be used to customize swarm action of subdomain name scan')
-	domain_scan.add_argument('-d',dest='enable_domain_scan',action='store_true',default=False,
-			help='Do subdomain scan on target')
-	domain_scan.add_argument('--d-compbrute',dest='domain_compbrute',action='store_true',default=False,
-			help='Use complete brute force without dictionary on target')
-	domain_scan.add_argument('--d-dict',dest='domain_dict',metavar='PATH',
-			help='Path to dictionary used for subdomain name scan')
-	domain_scan.add_argument('--d-maxlevel',dest='domain_maxlevel',metavar='NUM',
-			help='Max level of subdomain name to scan')
-	domain_scan.add_argument('--d-charset',dest='domain_charset',metavar='SET',
-			help='Charset used for complete brute foce')
-	domain_scan.add_argument('--d-levellen',dest='domain_levellen',metavar='LEN',
-			help='Length interval of subdomain name each level')
-	domain_scan.add_argument('--d-timeout',dest='domain_timeout',metavar='TIME',type=float,
-			help='Timeout option for subdomain name scan')
-
+	try:
+		for curmod in args.modules:
+			module=importlib.import_module('modules.'+curmod+'.'+curmod)
+			module.add_cli_args(parser)
+	except ImportError as e:
+		raise SwarmModuleException('an error occurred when try to import module: '+curmod)
+	except Exception as e:
+		raise SwarmModuleException('an error occurred when add cli parse option of module:'+
+			curmod+' info: '+repr(e))
 
 	parser.parse_args(namespace=args)
 
 	if not any((args.target,args.target_file)):
-		print 'At least one target need to be provided'
 		raise SwarmUseException('At least one target need to be provided')
 
 	if not any((args.swarm,args.swarm_file)):
-		print 'At least one swarm need to be provided'
 		raise SwarmUseException('At least one swarm need to be provided')
 

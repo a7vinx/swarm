@@ -1,11 +1,10 @@
-#!/user/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 
 import argparse
-from lib.core.sswarm import SSwarm
-from lib.core.logger import LOG
 from socket import timeout
+from lib.core.sswarm import SSwarm
 from lib.core.logger import init_logger
 from lib.core.logger import LOG
 from lib.core.exception import SwarmBaseException
@@ -24,7 +23,8 @@ def main():
 		# Ready to get and exec command from master host
 		sswarm.get_do_task()
 
-	except SwarmBaseException, e:
+	except SwarmBaseException as e:
+		LOG.debug(str(e))
 		return 
 	
 if __name__=='__main__':

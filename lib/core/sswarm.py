@@ -1,13 +1,15 @@
-#!/user/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import socket
 import time
 import multiprocessing
+import importlib
+import json
+import argparse
+import threading
 from lib.core.logger import LOG
-from lib.core.swarm_manager import SSwarmManager
-from scanner.domainsc import DomainScanner
-from scanner.dirsc import DirScanner
+from lib.core.manager import SSwarmManager
 
 class SSwarm(object):
 	"""
@@ -16,7 +18,7 @@ class SSwarm(object):
 	def __init__(self,s_port):
 		super(SSwarm, self).__init__()
 		self._s_port=s_port
-		self._args={}
+		self._args=argparse.Namespace()
 
 	def get_parse_args(self):
 		# first receive args
@@ -34,136 +36,61 @@ class SSwarm(object):
 
 	def get_do_task(self):
 		proc=[]
-		if self._args['process_num']==0:
+		if self._args.process_num==0:
 			for cur in range(multiprocessing.cpu_count()):
 				p=multiprocessing.Process(target=self._get_do_task_proc)
 				p.start()
 				proc.append(p)
 		else:
-			for cur in range(self._args['process_num']):
+			for cur in range(self._args.process_num):
 				p=multiprocessing.Process(target=self._get_do_task_proc)
 				p.start()
 				proc.append(p)
+		# start a new thread to listen command from master host
+		# use daemon argtment so we need not to wait for this thread to exit
+		t=threading.Thread(target=self._response_master)
+		t.daemon=True
+		t.start()
 		for cur in proc:
 			cur.join()
 		LOG.debug('task completed')
 
 	def _get_do_task_proc(self):
-		self._manager=SSwarmManager(address=(self._args['m_addr'], self._args['m_port']),
-				authkey=self._args['authkey'])
+		self._manager=SSwarmManager(address=(self._args.m_addr, self._args.m_port),
+				authkey=self._args.authkey)
 
-		# init scanners and other modules
-		self._init_module()
+		LOG.debug('load module: '+self._args.mod)
 		LOG.debug('begin to get and do task...')
+		try:
+			module=importlib.import_module('modules.'+self._args.mod+'.'+self._args.mod)
+		except ImportError as e:
+			raise SwarmModuleException('an error occured when load module:'+self._args.mod)
+		# create Slave class of this module
+		mod_slave=getattr(module,'Slave')(self._args)
 	
 		while True:
 			flag,task=self._manager.get_task()
-			# take action according to flag
-			if flag=='__doms__':
-				result=self.do_domain_scan(task)
-			elif flag=='__dirs__':
-				result=self.do_dir_scan(task)
-			
-			elif flag=='__off__':
+			if flag=='__off__':
 				break
-
+			# else use module to do task
+			result=mod_slave.do_task(task)
 			self._manager.put_result(result)
 
-	def do_domain_scan(self,task):
-		"""
-		Format:
-			Task format:
-			__doms__|task_index|domain name|dict|dict_path|start_line|scan_lines
-			__doms__|task_index|domain name|comp|charset|begin_str|end_str
-			Result format:
-			__doms__|task_index|result
-		Example:
-			put task:
-			__doms__|26|github.com|dict|./dictionary/domain.dict|2000|3000
-			__doms__|980|github.com|comp|ABCDEFGHIJKLMN8980|DAAA|D000
-			get result:
-			__doms__|980|gist.github.com;XX.github.com
-			__doms__|980|no subdomain
-		"""
-		if task[1]=='dict':
-			result=self._domain_scanner.dict_brute(task[0],task[2],task[3],task[4])
-		else:
-			result=self._domain_scanner.complete_brute(task[0],task[2],task[3],task[4])
-		return result
-
-	def do_dir_scan(self,task):
-		"""
-		Format:
-			Task format:
-			__dirs__|task_index|target|dict|dict_path|start_line|scan_lines
-			__dirs__|task_index|target|comp|charset|begin_str|end_str
-			__dirs__|task_index|target;target;target|crawl
-			Result format:
-			__dirs__:task_index:result
-		Example:
-			Put task:
-			__dirs__|90|github.com|dict|./dictionary/dir.dict|1000|900
-			__dirs__|91|github.com|comp|ABCabc|A|cccc
-			Get result:
-			__dirs__|90|no dir
-			__dirs__|1|github.com/something;github.com/something/something
-			__dirs__|4|github.com/something,GET,id,number,class;github.com/something/something,POST,XX,XX
-		"""
-		if task[1]=='dict':
-			result=self._dir_scanner.dict_brute(task[0],task[2],task[3],task[4])
-		elif task[1]=='comp':
-			result=self._dir_scanner.complete_brute(task[0],task[2],task[3],task[4])
-		else:
-			pass
-
-		return result
-
-	def do_web_vul_scan():
-		pass
-
-	def do_host_vul_scan():
-		pass
-
-	def do_try_exp():
-		pass
-
-	def do_try_post_exp():
-		pass
-
-	def _init_module(self):
-		self._domain_scanner=DomainScanner(self._args['thread_num'],self._args['domain_timeout'])
-		self._dir_scanner=DirScanner(self._args['thread_num'],self._args['dir_timeout'],
-			self._args['dir_not_exist'],self._args['dir_quick_scan'])
-
-
 	def _parse_args(self,args):
-		l=args.split(',')
-		for cur in l:
-			pair=cur.split(':')
-			LOG.debug('key: %s => value: %s'%(pair[0],pair[1]))
-			self._args[pair[0]]=pair[1]
-		self._unite_args()
-
-	def _unite_args(self):
-		"""
-		Correct type of some args.
-		"""
-		self._args['m_port']=int(self._args['m_port'],10)
-		self._args['process_num']=int(self._args['process_num'],10)
-		self._args['thread_num']=int(self._args['thread_num'],10)
-		self._args['domain_timeout']=float(self._args['domain_timeout'])
-		self._args['dir_timeout']=float(self._args['dir_timeout'])
-		self._args['dir_not_exist']=self._args['dir_not_exist'].split('|')
-		if self._args['dir_quick_scan']=='True':
-			self._args['dir_quick_scan']=True
-		else:
-			self._args['dir_quick_scan']=False
+		dict=json.loads(args)
+		for k,v in dict.items():
+			LOG.debug('set self._args.'+k+' => '+str(v))
+			setattr(self._args,k,v)
 
 	def _sync_data(self):
 		print self._receive_master()
 		print self._receive_master()
 		# TODO: do data sync here
 		pass
+
+	def _response_master(self):
+		while True:
+			self._receive_master()
 
 	def _receive_master(self):
 		s=socket.socket(socket.AF_INET,socket.SOCK_STREAM)

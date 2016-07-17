@@ -1,19 +1,23 @@
-#!/user/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import socket
 from IPy import IP
-from lib.core.logger import LOG
-from lib.core.exception import SwarmUseException
 from lib.core.exception import SwarmNetException
+from lib.core.exception import SwarmFileException
+from lib.core.exception import SwarmParseException
 
 def getlist(target='',target_file=''):
 	"""
 	Return integrated ip and domain name list from target list and file, 
 	with network segment parsed.
+
+	Raises:
+		SwarmNetException: time out when parsing target
+		SwarmFileException: an error occurred when try to open target file
+		SwarmParseException: an error occurred when try to parse arguments
 	"""
 	try:
-		LOG.info('begin to parse target list')
 		iplist=[]
 		if target!='':
 			iplist.extend(target)
@@ -25,25 +29,25 @@ def getlist(target='',target_file=''):
 			f.close()
 		# parse network segment and check
 		iplist=_unite_list(iplist)
-		LOG.info('parse completed')
 		return iplist
-	except socket.timeout, e:
-		LOG.critical('time out when parsing target')		
+	except socket.timeout as e:	
 		raise SwarmNetException('time out when parsing target')
-	except IOError, e:
-		LOG.critical('can not open target file')
-		raise SwarmUseException('can not open target file')
-	except Exception, e:
-		LOG.critical('invalid target or swarm address, or format error')
-		raise SwarmUseException('invalid target or swarm address, or format error')
+	except IOError as e:
+		raise SwarmFileException('can not open target file')
+	except Exception as e:
+		raise SwarmParseException('invalid address, or format error')
 
 def getswarmlist(swarm='',swarm_file=''):
 	"""
 	Return integrated ip and domain name list with port list from swarm list and file 
 	like (['127.0.0.1','127.0.0.2','github.com'],[80,90,90]).
+
+	Raises:
+		SwarmNetException: time out when parsing target
+		SwarmFileException: an error occurred when try to open target file
+		SwarmParseException: an error occurred when try to parse arguments
 	"""
 	try:
-		LOG.info('begin to parse swarm list')
 		rawlist=[]
 		iplist=[]
 		portlist=[]
@@ -56,17 +60,13 @@ def getswarmlist(swarm='',swarm_file=''):
 			rawlist.extend(swarm.splitlines())
 			f.close()
 		iplist,portlist=_unite_swarmlist(rawlist)
-		LOG.info('parse completed')
 		return iplist,portlist
-	except socket.timeout, e:
-		LOG.critical('time out when parsing target')		
+	except socket.timeout as e:
 		raise SwarmNetException('time out when parsing target')
-	except IOError, e:
-		LOG.critical('can not open target file')
-		raise SwarmUseException('can not open target file')
-	except Exception, e:
-		LOG.critical('invalid target or swarm address, or format error')
-		raise SwarmUseException('invalid target or swarm address, or format error')
+	except IOError as e:
+		raise SwarmFileException('can not open target file')
+	except Exception as e:
+		raise SwarmParseException('invalid address, or format error')
 
 def getiplist(srclist):
 	"""
@@ -85,7 +85,7 @@ def removeip(srclist):
 	for cur in srclist:
 		try:
 			IP(cur)
-		except ValueError, e:	
+		except ValueError as e:	
 			ret.append(cur)
 	return ret
 
@@ -141,7 +141,7 @@ def _ipname2ip(src):
 		retip.append(IP(src).strNormal())
 		return retip
 	# maybe it is a domain name so we have a try
-	except ValueError, e:
+	except ValueError as e:
 		retip=[]
 		tmp=socket.getaddrinfo(src,None)
 		for cur in tmp:
@@ -151,7 +151,7 @@ def _ipname2ip(src):
 def _try_ipname2ip(src):
 	try:
 		IP(src)
-	except ValueError, e:
+	except ValueError as e:
 		# maybe it is a domain name so we have a try
 		socket.getaddrinfo(src,None)
 

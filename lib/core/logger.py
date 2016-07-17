@@ -1,8 +1,11 @@
-#!/user/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import logging
 import sys
+
+REPORT=21
+logging.addLevelName(REPORT,"REPORT")
 
 LOG=logging.getLogger("swarm")
 
@@ -16,7 +19,8 @@ def init_logger(logfile,verbose,disable_col):
 			cli_logger = ColorizingStreamHandler(sys.stdout)
 			cli_logger.level_map[logging.DEBUG]=(None, 'white', False)
 			cli_logger.level_map[logging.INFO]=(None, 'green', False)
-		except ImportError:
+			cli_logger.level_map[logging.getLevelName("REPORT")] = (None, "cyan", False)
+		except ImportError as e:
 			print 'import error'
 			cli_logger = logging.StreamHandler(sys.stdout)
 	else:
@@ -25,11 +29,11 @@ def init_logger(logfile,verbose,disable_col):
 	if verbose==True:
 		LOG.setLevel(logging.DEBUG)	
 	else:
-		LOG.setLevel(logging.WARNING)
+		LOG.setLevel(logging.INFO)
 
 	file_formatter = logging.Formatter('[%(asctime)s] %(filename)s[line:%(lineno)d] [in func:%(funcName)s] %(levelname)s %(message)s',
 			datefmt='%d %b %Y %H:%M:%S')
-	cli_formatter = logging.Formatter('[%(asctime)s] %(filename)s[line:%(lineno)d] [in func:%(funcName)s] %(levelname)s %(message)s',
+	cli_formatter = logging.Formatter('[%(asctime)s] %(levelname)s: %(message)s',
 			datefmt='%H:%M:%S')
 	file_logger.setFormatter(file_formatter)
 	cli_logger.setFormatter(cli_formatter)
