@@ -17,17 +17,17 @@ def add_cli_args(cli_parser):
 	# domain scan option
 	domain_scan=cli_parser.add_argument_group('Domain Scan',
 		'Thes option can be used to customize swarm action of subdomain name scan')
-	domain_scan.add_argument('--d-compbrute',dest='domain_compbrute',action='store_true',default=False,
+	domain_scan.add_argument('--dom-compbrute',dest='domain_compbrute',action='store_true',
 			help='Use complete brute force without dictionary on target')
-	domain_scan.add_argument('--d-dict',dest='domain_dict',metavar='PATH',
+	domain_scan.add_argument('--dom-dict',dest='domain_dict',metavar='PATH',
 			help='Path to dictionary used for subdomain name scan')
-	domain_scan.add_argument('--d-maxlevel',dest='domain_maxlevel',metavar='NUM',
+	domain_scan.add_argument('--dom-maxlevel',dest='domain_maxlevel',metavar='NUM',
 			help='Max level of subdomain name to scan')
-	domain_scan.add_argument('--d-charset',dest='domain_charset',metavar='SET',
+	domain_scan.add_argument('--dom-charset',dest='domain_charset',metavar='SET',
 			help='Charset used for complete brute foce')
-	domain_scan.add_argument('--d-levellen',dest='domain_levellen',metavar='LEN',
+	domain_scan.add_argument('--dom-levellen',dest='domain_levellen',metavar='LEN',
 			help='Length interval of subdomain name each level')
-	domain_scan.add_argument('--d-timeout',dest='domain_timeout',metavar='TIME',type=float,
+	domain_scan.add_argument('--dom-timeout',dest='domain_timeout',metavar='TIME',type=float,
 			help='Timeout option for subdomain name scan')
 
 def parse_conf(args,conf_parser):

@@ -15,7 +15,29 @@ from lib.core.exception import SwarmParseException
 
 
 def add_cli_args(cli_parser):
-	pass
+	# dir scan options
+	dir_scan=cli_parser.add_argument_group('Directory Scan',
+		'These option can be used to customize swarm action of directory scan')
+	dir_scan.add_argument('--dir-http-port',dest='dir_http_port',metavar='PORT',
+			help="Separated by '|' if you need multiple ports")
+	dir_scan.add_argument('--dir-https-port',dest='dir_https_port',metavar='PORT',
+			help="Separated by '|' if you need multiple ports")
+	dir_scan.add_argument('--dir-compbrute',dest='dir_compbrute',action='store_true',
+			help='Use complete brute force without dictionary on target')
+	dir_scan.add_argument('--dir-charset',dest='dir_charset',metavar='SET',
+			help='Charset used for complete brute foce')
+	dir_scan.add_argument('--dir-len',dest='dir_len',metavar='LEN',
+			help='Length interval of directory name or file name')
+	dir_scan.add_argument('--dir-dict',dest='dir_dict',metavar='PATH',
+			help='Path to dictionary used for directory scan')
+	dir_scan.add_argument('--dir-maxdepth',dest='dir_maxdepth',metavar='NUM',type=int,
+			help='Max depth in directory and file scan')
+	dir_scan.add_argument('--dir-timeout',dest='dir_timeout',metavar='TIME',type=float,
+			help='Timeout option for directory scan')
+	dir_scan.add_argument('--dir-not-exist',dest='dir_not_exist',metavar='FLAG',
+			help="Separated by '|' if you need multiple flags")
+	dir_scan.add_argument('--dir-quick-scan',dest='dir_quick_scan',action='store_true',
+			help='Use HEAD method instead of GET in scan')
 
 def parse_conf(args,conf_parser):
 	# directory and file scan options
