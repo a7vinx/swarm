@@ -1,43 +1,42 @@
 # swarm
 v0.2.0
 
-English | [中文](https://github.com/Arvin-X/swarm/blob/master/docs/README-zh-CN.md).
+[English](https://github.com/Arvin-X/swarm/blob/master/README.md) | 中文
 
-Swarm is an open source modular distributed penetration testing Tool that use distributed task queue to implement communication in the master-slave mode system. It consists of a distributed framework and function modules. The function module can be an entirely new implement of some penetration functions or it can be a simple wrap of an existing tool to implement distributed functionality. Because of the modularity architecture it is easy to customize and extend new features under the distributed framework.
+Swarm是一个开源的模块化分布式渗透测试工具，使用分布式任务队列实现主从模式系统间的通信。Swarm由分布式框架及各功能模块组成，其中的功能模块既可以是对某些渗透功能的全新实现，也可以是对已经存在的渗透工具的简单封装以实现其分布式的功能。在模块化架构下很容易自定义模块或者为Swarm扩展新功能。
 
-Now in this version 0.2.0 it only has two modules:
+在现在的v0.2.0版本中，Swarm只实现了两个模块：
+- 子域名扫描模块
+- 文件扫描模块
 
-- Subdomain name scan module
-- Directories and files scan module
+如果你想实现自己的模块，你可以阅读[这份文件](https://github.com/Arvin-X/swarm/blob/master/docs/modules.txt).
 
-If you want to write your own module, you can read [this](https://github.com/Arvin-X/swarm/blob/master/docs/modules.txt).
+## 安装
+可以在[这里](https://github.com/Arvin-X/swarm/archive/master.zip)下载swarm最新的压缩包。
 
-
-## Install
-Zipball can be download [here](https://github.com/Arvin-X/swarm/archive/master.zip).
-You can also use git to get swarm:
+你也可以使用git来获取swarm：
 ```
 git clone git@github.com:Arvin-X/swarm.git
 ```
-Swarm works with Python 2.6.x or 2.7.x.
+Swarm需要Python 2.6.x 或者2.7.x 环境。
 
-## Usage
-Run swarm.py on master host to distribute tasks and run swarm-s.py with '-p' option on slave host to finish the subtask from master.
+## 使用方法
+在master主机上运行swarm.py来分发任务，在slave主机上使用“-p”参数运行swarm-s.py 接收并完成来自master的子任务。
 ```
 python swarm-s.py -p 9090
 ```
-You can also establish a listener on target port of slave host to receive command to waken swarm-s by specify '--waken' option when you run swarm.py. Otherwise you should leave '--waken' null.
-To create a listener, you can use nc or socat like:
+你也可以在slave主机的指定端口建立监听接收来自master对swarm-s的唤醒命令,这需要你使用swarm的“--waken”选项。如果你不需要唤醒swarm-s，将这一选项置为空。
+你可以使用nc或者socat来建立监听：
 ```
 nc -e /bin/sh -l 9090
 ```
-And use waken command like:
+然后使用唤醒命令例如:
 ```
 python /root/swarm/swarm-s.py ARGS
 ```
-You need to leave "ARGS" in your command and ensure it will be cli args passed to swarm.py for swarm to replace it with some necessary arguments like '-p'.
+你需要在命令中预留字符”ARGS”并保证它将会作为命令行参数传递给swarm-s，swarm将会在运行过程中使用类似“-p”等参数替换它。
 
-Basic usage of swarm:
+Swarm的基本使用方法：
 ```
 usage: swarm.py [-h] -m MODULE [-v] [-c] [-o PATH] [-t [TARGET [TARGET ...]]]
                 [-T PATH] [-s [SWARM [SWARM ...]]] [-S PATH] [--waken CMD]
@@ -120,7 +119,7 @@ Domain Scan:
   --dom-levellen LEN    Length interval of subdomain name each level
   --dom-timeout TIME    Timeout option for subdomain name scan
   ```
-It is recommended that to use configuration file to configure swarm instead of using cli arguments if your requirement is high.
+如果你有较多的需求，最好使用配置文件而不是命令行参数来定义它们。
 
 ## License ##
-Swarm is licensed under the [GPLv3](https://github.com/Arvin-X/swarm/blob/master/LICENSE).
+Swarm在[GPLv3](https://github.com/Arvin-X/swarm/blob/master/LICENSE)许可证下发布。
