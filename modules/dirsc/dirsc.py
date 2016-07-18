@@ -48,7 +48,7 @@ def parse_conf(args,conf_parser):
 	args.dir_len=conf_parser.get('Directory Scan','dir_len')
 	args.dir_dict=conf_parser.get('Directory Scan','dir_dict')
 	args.dir_maxdepth=conf_parser.getint('Directory Scan','dir_maxdepth')
-	args.dir_timeout=conf_parser.getint('Directory Scan','dir_timeout')
+	args.dir_timeout=conf_parser.getfloat('Directory Scan','dir_timeout')
 	args.dir_not_exist=conf_parser.get('Directory Scan','dir_not_exist')
 	args.dir_quick_scan=conf_parser.getboolean('Directory Scan','dir_quick_scan')
 
