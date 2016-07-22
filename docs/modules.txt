@@ -47,7 +47,7 @@ class Master(object):
 		"""
 		The args in arguments is an instance of argparse.Namespace and it stores all 
 		arguments of swarm. You can get value of attribute XX by simply using 'args.XX'. 
-		yYou should do your module initialization for Master here.
+		You should do your module initialization for Master here.
 		"""
 		super(Master, self).__init__()
 		self._args = args	
@@ -70,7 +70,9 @@ class Master(object):
 		"""
 		This function will be called when swarm get a result from slave hosts. The result 
 		in arguments is a string returned by func do_task in your class Slave. You should 
-		to handle it by parse and store it here. This func should return nothing.
+		to handle it by parse and store it here. A pymongo.collection.Collection object is 
+		provided in argument 'args' passed to func __init__. You can use this object by 
+		'args.coll' to operate the collection in MongoDB. This func should return nothing.
 		"""
 		pass
 
@@ -89,8 +91,8 @@ class Slave(object):
 	def __init__(self, args):
 		"""
 		The args in arguments is an instance of argparse.Namespace and it stores all arguments
-		of swarm. It is same as args in Master. You can get value of attribute XX by simply 
-		using 'args.XX'. And you should do your module initialization for Slave here.
+		of swarm. It is same as args in Master but no db Objects. You can get value of attribute 
+		XX by simply using 'args.XX'. And you should do your module initialization for Slave here.
 		"""
 		super(Slave, self).__init__()
 		self._args = args

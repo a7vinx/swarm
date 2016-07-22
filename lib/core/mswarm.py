@@ -15,6 +15,7 @@ from lib.parse.host import removeip
 from lib.parse.host import getiplist
 from lib.core.logger import LOG
 from lib.core.logger import REPORT
+from lib.core.database import init_db
 from lib.core.exception import SwarmUseException
 from lib.core.exception import SwarmFileException
 from lib.core.exception import SwarmNetException
@@ -86,6 +87,10 @@ class MSwarm(object):
 		if self._args.thread_num<=0:
 			raise SwarmUseException('thread number should be positive')
 
+		# connect to db server
+		LOG.info('try to connect to db server: %s:%d'%(self._args.db_addr,self._args.db_port))
+		self._args.db,self._args.coll=init_db(self._args.db_addr,self._args.db_port,self._args.mod)
+		LOG.info('Connection to db server completed')
 		# start the manager
 		self._manager=MSwarmManager(self._args.timeout,address=('', self._args.m_port), 
 			authkey=self._args.authkey)
@@ -150,6 +155,8 @@ class MSwarm(object):
 			self._manager.put_task('__off__','|')
 		time.sleep(2)
 		self._manager.shutdown()
+		# drop collection 
+		self._args.db.drop_collection(self._args.coll)
 
 	def _sync_data(self):
 		self._send2swarm_r('sync')

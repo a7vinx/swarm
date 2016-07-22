@@ -54,6 +54,14 @@ def cli_parse(args):
 	# swarm.add_argument('--sync',dest='sync_data',action='store_true',default=False,
 	# 		help='Synchronize data like dictionary and vulnerability database etc')
 
+	# database option
+	database=parser.add_argument_group('Database',
+		'These option can be used to access MongoDB server')
+	database.add_argument('--db-addr',dest='db_addr',metavar='ADDR',
+			help='Address of MongoDB server')
+	database.add_argument('--db-port',dest='db_port',metavar='PORT',type=int,
+			help='Listening port of MongoDB server')
+
 	# common option
 	common=parser.add_argument_group('Common',
 		'These option can be used to customize common configuration of slave host')

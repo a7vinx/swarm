@@ -18,3 +18,6 @@ class SwarmModuleException(SwarmBaseException):
 
 class SwarmFileException(SwarmBaseException):
 	pass
+
+class SwarmDBException(SwarmBaseException):
+	pass

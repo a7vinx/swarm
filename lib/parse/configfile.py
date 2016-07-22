@@ -35,6 +35,10 @@ def configfile_parse(args):
 		if args.swarm!='':
 			args.swarm=args.swarm.split()
 
+		# database options
+		args.db_addr=conf_parser.get('Database','db_addr')
+		args.db_port=conf_parser.getint('Database','db_port')
+
 		# common options
 		args.process_num=conf_parser.getint('Common','process_num')
 		args.thread_num=conf_parser.getint('Common','thread_num')
