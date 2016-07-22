@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 
 import socket
+import copy
 from multiprocessing.dummy import Pool
 from multiprocessing import TimeoutError
 from lib.utils.brute import generate_bflist
 from lib.core.logger import LOG
-from lib.core.logger import REPORT
 from lib.parse.host import removeip
 from lib.utils.subtasks import generate_compbrute_subtask
 from lib.utils.subtasks import generate_dictbrute_subtask
@@ -71,14 +71,16 @@ class Master(object):
 		self._args = args
 		self._scan_result={}
 		self._domain_list=removeip(self._args.target_list)
-		# initial scan result dict
-		for x in self._domain_list:
-			self._scan_result[x]=[]
+		# copy it for quick query 
+		self._domain_list_orig=copy.copy(self._domain_list)
 		# do some check
 		if len(self._domain_list)==0:
 			raise SwarmUseException('domain name must be provided')			
 		if self._args.domain_maxlevel<=0:
 			raise SwarmUseException('subdomain name max level must be positive')
+
+		# initial the collection
+		self._args.coll.insert({'root':self._domain_list})
 		# record current subdomain name level
 		self._curlevel=0
 
@@ -121,13 +123,21 @@ class Master(object):
 			# update domain name list for next iteration
 			self._domain_list.extend(resultl)
 			# add it into scan result meanwhile
-			for curkey in self._scan_result:
+			for curkey in self._domain_list_orig:
 				if resultl[0].find(curkey)==len(resultl[0])-len(curkey):
-					self._scan_result[curkey].extend(resultl)
+					self._args.coll.insert({'domain':curkey,'subdomain':resultl})
 					break
 
 	def report(self):
-		LOG.log(REPORT,'scan result:%s'%self._scan_result)
+		for curdomain in self._domain_list_orig:
+			all_subdomain=[]
+			subdomain=self._args.coll.find({'domain':curdomain})
+			for cursub in subdomain:
+				all_subdomain.extend(cursub['subdomain'])
+			print '============= subdomain name of '+curdomain+' =============='
+			print '\n'.join(all_subdomain)
+		print '========================================================='
+		
 
 class Slave(object):
 	"""

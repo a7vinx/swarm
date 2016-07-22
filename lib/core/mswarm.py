@@ -16,6 +16,7 @@ from lib.parse.host import getiplist
 from lib.core.logger import LOG
 from lib.core.logger import REPORT
 from lib.core.database import init_db
+from lib.core.exception import SwarmBaseException
 from lib.core.exception import SwarmUseException
 from lib.core.exception import SwarmFileException
 from lib.core.exception import SwarmNetException
@@ -140,7 +141,7 @@ class MSwarm(object):
 					else:
 						LOG.log(REPORT,'all swarm works fine. now num: %d'%self._swarm_num)
 					# continue 
-		LOG.info('task completed')
+		LOG.info('task completed. result:')
 		# do final report now
 		mod_master.report()
 		self._shutdown()
