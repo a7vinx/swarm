@@ -134,7 +134,7 @@ class Master(object):
 			subdomain=self._args.coll.find({'domain':curdomain})
 			for cursub in subdomain:
 				all_subdomain.extend(cursub['subdomain'])
-			print '============= subdomain name of '+curdomain+' =============='
+			print '============= scan result of '+curdomain+' =============='
 			print '\n'.join(all_subdomain)
 		print '========================================================='
 		

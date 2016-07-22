@@ -141,7 +141,7 @@ class MSwarm(object):
 					else:
 						LOG.log(REPORT,'all swarm works fine. now num: %d'%self._swarm_num)
 					# continue 
-		LOG.info('task completed. result:')
+		LOG.log(REPORT,'task completed')
 		# do final report now
 		mod_master.report()
 		self._shutdown()

@@ -98,36 +98,24 @@ class Master(object):
 		except SwarmParseException as e:
 			raise SwarmUseException('invalid http or https port argument in directory scan')
 
-		# initial scan_result use port scan result.
-		# it should prepare a dict contains valid targets like:
+		# initial _url_list_orig.
+		# it should prepare a list contains valid targets like:
 		# 
-		# {'http://github.com:81':['/',],
-		#  'http://XX.com':['/',],
-		#  'https://github.com:9090':['/',],
-		#  'https://XX.com':['/',]}
-		self._scan_result={}
+		# ['http://github.com:81','http://XX.com:80','https://github.com:9090']
+		self._url_list_orig=[]
 		for curhost in self._args.target_list:
 			for curport in http_portl:
-				if curport==80:
-					self._scan_result['http://'+curhost]=['/',]
-				else:
-					self._scan_result['http://'+curhost+':'+str(curport)]=['/',]
+					self._url_list_orig.append('http://'+curhost+':'+str(curport))
 			for curport in https_portl:
-				if curport==443:
-					self._scan_result['https://'+curhost]=['/',]
-				else:
-					self._scan_result['https://'+curhost+':'+str(curport)]=['/',]
+					self._url_list_orig.append('https://'+curhost+':'+str(curport))
 
 		if self._args.dir_maxdepth<0:
 			raise SwarmUseException('directory max depth can not be negative')
 		if self._args.dir_maxdepth==0:
 			self._args.dir_maxdepth=9999
 		
-		# initial url_list
-		self._url_list=[]
-		for k in self._scan_result:
-			# it should only has root directory in each key-value pair
-			self._url_list.append(k+self._scan_result[k][0])		
+		# initial url_list 
+		self._url_list=[x+'/' for x in self._url_list_orig]	
 		# record current dir depth
 		self._curdepth=0
 
@@ -173,11 +161,18 @@ class Master(object):
 					self._url_list.append(x)
 			# store result into final result
 			key='/'.join(result_list[0].split('/')[:3])
-			for x in result_list:
-				self._scan_result[key].append(x[len(key):])
+			self._args.coll.insert({'domain':key,'content':[x[len(key):] for x in result_list]})
+
 
 	def report(self):
-		LOG.log(REPORT,'result:%s'%self._scan_result)
+		for curdomain in self._url_list_orig:
+			all_content=[]
+			content=self._args.coll.find({'domain':curdomain})
+			for cur in content:
+				all_content.extend(cur['content'])
+			print '============= scan result of '+curdomain+' =============='
+			print '\n'.join(all_content)
+		print '================================================================='		
 
 class Slave(object):
 	"""
