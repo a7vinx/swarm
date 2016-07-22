@@ -1,11 +1,11 @@
 # swarm
-v0.2.0
+v0.3.0
 
 [English](https://github.com/Arvin-X/swarm/blob/master/README.md) | 中文
 
-Swarm是一个开源的模块化分布式渗透测试工具，使用分布式任务队列实现主从模式系统间的通信。Swarm由分布式框架及各功能模块组成，其中的功能模块既可以是对某些渗透功能的全新实现，也可以是对已经存在的渗透工具的简单封装以实现其分布式的功能。在模块化架构下很容易自定义模块或者为Swarm扩展新功能。
+Swarm是一个开源的模块化分布式渗透测试工具，使用分布式任务队列实现主从模式系统间的通信，使用MongoDB做数据存储。Swarm由分布式框架及各功能模块组成，其中的功能模块既可以是对某些渗透功能的全新实现，也可以是对已经存在的渗透工具的简单封装以实现其分布式的功能。在模块化架构下很容易自定义模块或者为Swarm扩展新功能。
 
-在现在的v0.2.0版本中，Swarm只实现了两个模块：
+在现在的v0.3.0版本中，Swarm只实现了两个模块：
 - 子域名扫描模块
 - 文件扫描模块
 
@@ -15,10 +15,22 @@ Swarm是一个开源的模块化分布式渗透测试工具，使用分布式任
 可以在[这里](https://github.com/Arvin-X/swarm/archive/master.zip)下载swarm最新的压缩包。
 
 你也可以使用git来获取swarm：
+
 ```
 git clone git@github.com:Arvin-X/swarm.git
 ```
-Swarm需要Python 2.6.x 或者2.7.x 环境。
+Swarm需要Python 2.6.x 或者2.7.x 环境。Swarm也需要MongoDB以及它的python支持库pymongo。
+
+如果你没有安装MongoDB，你可以使用apt-get来安装：
+
+```
+apt-get install mongodb
+```
+要安装pymongo，可以使用：
+
+```
+pip install pymongo
+```
 
 ## 使用方法
 在master主机上运行swarm.py来分发任务，在slave主机上使用“-p”参数运行swarm-s.py 接收并完成来自master的子任务。
@@ -37,12 +49,14 @@ python /root/swarm/swarm-s.py ARGS
 你需要在命令中预留字符”ARGS”并保证它将会作为命令行参数传递给swarm-s，swarm将会在运行过程中使用类似“-p”等参数替换它。
 
 Swarm的基本使用方法：
+
 ```
 usage: swarm.py [-h] -m MODULE [-v] [-c] [-o PATH] [-t [TARGET [TARGET ...]]]
                 [-T PATH] [-s [SWARM [SWARM ...]]] [-S PATH] [--waken CMD]
                 [--timeout TIME] [--m-addr ADDR] [--m-port PORT]
-                [--s-port PORT] [--authkey KEY] [--process NUM] [--thread NUM]
-                [--taskg NUM] [--dir-http-port PORT] [--dir-https-port PORT]
+                [--s-port PORT] [--authkey KEY] [--db-addr ADDR]
+                [--db-port PORT] [--process NUM] [--thread NUM] [--taskg NUM]
+                [--dir-http-port PORT] [--dir-https-port PORT]
                 [--dir-compbrute] [--dir-charset SET] [--dir-len LEN]
                 [--dir-dict PATH] [--dir-maxdepth NUM] [--dir-timeout TIME]
                 [--dir-not-exist FLAG] [--dir-quick-scan] [--dom-compbrute]
@@ -87,6 +101,12 @@ Swarm:
                         master
   --authkey KEY         Auth key between master and slave hosts
 
+Database:
+  These option can be used to access MongoDB server
+
+  --db-addr ADDR        Address of MongoDB server
+  --db-port PORT        Listening port of MongoDB server
+
 Common:
   These option can be used to customize common configuration of slave host
 
@@ -117,8 +137,8 @@ Domain Scan:
   --dom-maxlevel NUM    Max level of subdomain name to scan
   --dom-charset SET     Charset used for complete brute foce
   --dom-levellen LEN    Length interval of subdomain name each level
-  --dom-timeout TIME    Timeout option for subdomain name scan
-  ```
+  --dom-timeout TIME    Timeout option for subdomain name scan  
+```
 如果你有较多的需求，最好使用配置文件而不是命令行参数来定义它们。
 
 ## License ##

@@ -1,11 +1,11 @@
 # swarm
-v0.2.0
+v0.3.0
 
 English | [中文](https://github.com/Arvin-X/swarm/blob/master/docs/README-zh-CN.md).
 
-Swarm is an open source modular distributed penetration testing Tool that use distributed task queue to implement communication in the master-slave mode system. It consists of a distributed framework and function modules. The function module can be an entirely new implement of some penetration functions or it can be a simple wrap of an existing tool to implement distributed functionality. Because of the modularity architecture it is easy to customize and extend new features under the distributed framework.
+Swarm is an open source modular distributed penetration testing Tool that use distributed task queue to implement communication in the master-slave mode system and use MongoDB for data storage. It consists of a distributed framework and function modules. The function module can be an entirely new implement of some penetration functions or it can be a simple wrap of an existing tool to implement distributed functionality. Because of the modularity architecture it is easy to customize and extend new features under the distributed framework.
 
-Now in this version 0.2.0 it only has two modules:
+Now in this version 0.3.0 it only has two modules:
 
 - Subdomain name scan module
 - Directories and files scan module
@@ -16,10 +16,23 @@ If you want to write your own module, you can read [this](https://github.com/Arv
 ## Install
 Zipball can be download [here](https://github.com/Arvin-X/swarm/archive/master.zip).
 You can also use git to get swarm:
+
 ```
 git clone git@github.com:Arvin-X/swarm.git
 ```
-Swarm works with Python 2.6.x or 2.7.x.
+
+Swarm works with Python 2.6.x or 2.7.x. It need MongoDB and its python support *pymongo*. 
+
+If you do not have MongoDB, you can use apt-get to install it:
+
+```
+apt-get install mongodb
+```
+To install pymongo, use:
+
+```
+pip install pymongo
+```
 
 ## Usage
 Run swarm.py on master host to distribute tasks and run swarm-s.py with '-p' option on slave host to finish the subtask from master.
@@ -38,12 +51,14 @@ python /root/swarm/swarm-s.py ARGS
 You need to leave "ARGS" in your command and ensure it will be cli args passed to swarm.py for swarm to replace it with some necessary arguments like '-p'.
 
 Basic usage of swarm:
+
 ```
 usage: swarm.py [-h] -m MODULE [-v] [-c] [-o PATH] [-t [TARGET [TARGET ...]]]
                 [-T PATH] [-s [SWARM [SWARM ...]]] [-S PATH] [--waken CMD]
                 [--timeout TIME] [--m-addr ADDR] [--m-port PORT]
-                [--s-port PORT] [--authkey KEY] [--process NUM] [--thread NUM]
-                [--taskg NUM] [--dir-http-port PORT] [--dir-https-port PORT]
+                [--s-port PORT] [--authkey KEY] [--db-addr ADDR]
+                [--db-port PORT] [--process NUM] [--thread NUM] [--taskg NUM]
+                [--dir-http-port PORT] [--dir-https-port PORT]
                 [--dir-compbrute] [--dir-charset SET] [--dir-len LEN]
                 [--dir-dict PATH] [--dir-maxdepth NUM] [--dir-timeout TIME]
                 [--dir-not-exist FLAG] [--dir-quick-scan] [--dom-compbrute]
@@ -88,6 +103,12 @@ Swarm:
                         master
   --authkey KEY         Auth key between master and slave hosts
 
+Database:
+  These option can be used to access MongoDB server
+
+  --db-addr ADDR        Address of MongoDB server
+  --db-port PORT        Listening port of MongoDB server
+
 Common:
   These option can be used to customize common configuration of slave host
 
@@ -119,7 +140,7 @@ Domain Scan:
   --dom-charset SET     Charset used for complete brute foce
   --dom-levellen LEN    Length interval of subdomain name each level
   --dom-timeout TIME    Timeout option for subdomain name scan
-  ```
+```
 It is recommended that to use configuration file to configure swarm instead of using cli arguments if your requirement is high.
 
 ## License ##
