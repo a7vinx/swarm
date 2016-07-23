@@ -82,7 +82,8 @@ def cli_parse(args):
 		raise SwarmModuleException('an error occurred when add cli parse option of module:'+
 			curmod+' info: '+repr(e))
 
-	parser.parse_args(namespace=args)
+	leftargsl=parser.parse_known_args(namespace=args)[1]
+	args.leftargsl=leftargsl
 
 	if not any((args.target,args.target_file)):
 		raise SwarmUseException('At least one target need to be provided')

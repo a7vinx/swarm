@@ -78,7 +78,7 @@ class MSwarmManager(SwarmManager):
 		task_result=self._result_queue.get(block=True,timeout=self._timeout)
 		resultl=task_result.split('|') 
 		index=int(resultl[1],10)
-		result=resultl[2]
+		result='|'.join(resultl[2:])
 		# do confirm
 		# if it is duplicate, try to get result again
 		if self._task_confirm_list[index]!=0:

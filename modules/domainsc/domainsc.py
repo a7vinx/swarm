@@ -14,7 +14,7 @@ from lib.core.exception import SwarmParseException
 from lib.core.exception import SwarmUseException
 
 def add_cli_args(cli_parser):
-	# domain scan option
+	# domain scan options
 	domain_scan=cli_parser.add_argument_group('Domain Scan',
 		'Thes option can be used to customize swarm action of subdomain name scan')
 	domain_scan.add_argument('--dom-compbrute',dest='domain_compbrute',action='store_true',
@@ -69,7 +69,6 @@ class Master(object):
 	def __init__(self, args):
 		super(Master, self).__init__()
 		self._args = args
-		self._scan_result={}
 		self._domain_list=removeip(self._args.target_list)
 		# copy it for quick query 
 		self._domain_list_orig=copy.copy(self._domain_list)
