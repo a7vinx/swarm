@@ -3,6 +3,7 @@
 
 from libnmap.process import NmapProcess
 from libnmap.parser import NmapParser, NmapParserException
+import argparse
 
 from lib.core.exception import SwarmUseException
 from lib.core.exception import SwarmParseException
@@ -17,9 +18,8 @@ def add_cli_args(cli_parser):
 			help="Support format like '80,443,3306,1024-2048'")
 	nmap.add_argument('--nmap-top-ports',dest='nmap_top_ports',metavar='NUM',type=int,
 			help='Scan <number> most common ports')
-	nmap.add_argument('--nmap-ops',dest='nmap_options',action='store_true',
-			help="Nmap options list in nmap’s man pages except group 'TARGET SPECIFICATION'"
-				" and 'PORT SPECIFICATION'")
+	nmap.add_argument('--nmap-ops',dest='nmap_options',nargs=argparse.REMAINDER,
+			help="Nmap options list in nmap’s man pages, this should be the last in cli args")
 
 def parse_conf(args,conf_parser):
 	# nmap module options
@@ -55,12 +55,21 @@ class Master(object):
 			return []
 		# check wether exists option in nmap option group 'PORT SPECIFICATION' or 
 		# 'TARGET SPECIFICATION'
-		illegall=['-iL','-iR','--exclude','--excludefile','-p','--exclude-ports','-F',
-			'-r','--top-ports','--port-ratio']
-		for x in self._args.leftargsl:
-			if x in illegall:
-				raise SwarmUseException("please do not use nmap options in group 'TARGET SPECIFICATION'"
-					" or 'PORT SPECIFICATION'")
+		legall=['-sL','-sn','-Pn','-PS','-PA','-PU','-PY','-PE','-PP','-PM','-PO','-n','-R',
+			'--dns-servers','--system-dns','--traceroute','-sS','-sT','-sA','-sW','-sM','-sU',
+			'-sN','-sF','-sX','--scanflags','-sI','-sY','-sZ','-sO','-b','-sV','--version-intensity',
+			'--version-light','--version-all','--version-trace','-sC','--script','--script-args',
+			'--script-args-file','--script-trace','--script-updatedb','--script-help','-O',
+			'--osscan-limit','--osscan-guess','-T','--min-hostgroup','--max-hostgroup','--min-parallelism',
+			'--max-parallelism','--min-rtt-timeout','--max-rtt-timeout','--initial-rtt-timeout',
+			'--max-retries','--host-timeout','--scan-delay','--max-scan-delay','--min-rate','--max-rate',
+			'-f','--mtu','-D','-S','-e','-g','--source-port','--proxies','--data','--data-string',
+			'--data-length','--ip-options','--ttl','--spoof-mac','--badsum','-6','-A','--datadir',
+			'--send-eth','--send-ip','--privileged','--unprivileged']
+		for cur in self._args.nmap_options:
+		 	resultl=[cur.startswith(x) for x in legall]
+		 	if not (True in resultl):
+				raise SwarmUseException("not supported nmap option")
 
 		subtaskl=[]
 		# generate subtask
@@ -145,7 +154,7 @@ class Slave(object):
 		"""
 		try:
 			taskl=task.split('|')
-			nmap_task=NmapProcess(taskl[0],taskl[1]+' '+' '.join(self._args.leftargsl))
+			nmap_task=NmapProcess(taskl[0],taskl[1]+' '+' '.join(self._args.nmap_options))
 			rc=nmap_task.run()
 			if rc!=0:
 				return '|'.join([taskl[0],'f',str(rc)+' '+nmap_task.stderr])
