@@ -1,14 +1,15 @@
 # swarm
-v0.3.0
+v0.4.0
 
 English | [中文](https://github.com/Arvin-X/swarm/blob/master/docs/README-zh-CN.md).
 
 Swarm is an open source modular distributed penetration testing Tool that use distributed task queue to implement communication in the master-slave mode system and use MongoDB for data storage. It consists of a distributed framework and function modules. The function module can be an entirely new implement of some penetration functions or it can be a simple wrap of an existing tool to implement distributed functionality. Because of the modularity architecture it is easy to customize and extend new features under the distributed framework.
 
-Now in this version 0.3.0 it only has two modules:
+Now in this version 0.4.0 it only has three modules:
 
 - Subdomain name scan module
 - Directories and files scan module
+- Nmap extension module
 
 If you want to write your own module, you can read [this](https://github.com/Arvin-X/swarm/blob/master/docs/modules.txt).
 
@@ -33,6 +34,12 @@ To install pymongo, use:
 ```
 pip install pymongo
 ```
+If you want use Nmap extension module, you need python library *libnmap* on both master and slave host and *nmap* on slave host. To get *libnmap*, use pip:
+
+```
+pip install libnmap
+```
+
 
 ## Usage
 Run swarm.py on master host to distribute tasks and run swarm-s.py with '-p' option on slave host to finish the subtask from master.
@@ -63,7 +70,8 @@ usage: swarm.py [-h] -m MODULE [-v] [-c] [-o PATH] [-t [TARGET [TARGET ...]]]
                 [--dir-dict PATH] [--dir-maxdepth NUM] [--dir-timeout TIME]
                 [--dir-not-exist FLAG] [--dir-quick-scan] [--dom-compbrute]
                 [--dom-dict PATH] [--dom-maxlevel NUM] [--dom-charset SET]
-                [--dom-levellen LEN] [--dom-timeout TIME]
+                [--dom-levellen LEN] [--dom-timeout TIME] [--nmap-ports PORTS]
+                [--nmap-top-ports NUM] [--nmap-ops ...]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -119,16 +127,16 @@ Common:
 Directory Scan:
   These option can be used to customize swarm action of directory scan
 
-  --dir-http-port PORT  Separated by '|' if you need multiple ports
+  --dir-http-port PORT  Separated by comma if you need multiple ports
   --dir-https-port PORT
-                        Separated by '|' if you need multiple ports
+                        Separated by comma if you need multiple ports
   --dir-compbrute       Use complete brute force without dictionary on target
   --dir-charset SET     Charset used for complete brute foce
   --dir-len LEN         Length interval of directory name or file name
   --dir-dict PATH       Path to dictionary used for directory scan
   --dir-maxdepth NUM    Max depth in directory and file scan
   --dir-timeout TIME    Timeout option for directory scan
-  --dir-not-exist FLAG  Separated by '|' if you need multiple flags
+  --dir-not-exist FLAG  Separated by double comma if you need multiple flags
   --dir-quick-scan      Use HEAD method instead of GET in scan
 
 Domain Scan:
@@ -140,7 +148,17 @@ Domain Scan:
   --dom-charset SET     Charset used for complete brute foce
   --dom-levellen LEN    Length interval of subdomain name each level
   --dom-timeout TIME    Timeout option for subdomain name scan
+
+Nmap Module:
+  These options can be used customize nmap action on slave hosts
+
+  --nmap-ports PORTS    Support format like '80,443,3306,1024-2048'
+  --nmap-top-ports NUM  Scan <number> most common ports
+  --nmap-ops ...        Nmap options list in nmap’s man pages, this should
+                        be the last in cli args
+
 ```
+
 It is recommended that to use configuration file to configure swarm instead of using cli arguments if your requirement is high.
 
 ## License ##

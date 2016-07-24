@@ -1,13 +1,15 @@
 # swarm
-v0.3.0
+v0.4.0
 
 [English](https://github.com/Arvin-X/swarm/blob/master/README.md) | 中文
 
 Swarm是一个开源的模块化分布式渗透测试工具，使用分布式任务队列实现主从模式系统间的通信，使用MongoDB做数据存储。Swarm由分布式框架及各功能模块组成，其中的功能模块既可以是对某些渗透功能的全新实现，也可以是对已经存在的渗透工具的简单封装以实现其分布式的功能。在模块化架构下很容易自定义模块或者为Swarm扩展新功能。
 
-在现在的v0.3.0版本中，Swarm只实现了两个模块：
-- 子域名扫描模块
-- 文件扫描模块
+在现在的v0.4.0版本中，Swarm只实现了两个模块：
+
+ - 子域名扫描模块
+ - 文件扫描模块
+ - Nmap扩展模块
 
 如果你想实现自己的模块，你可以阅读[这份文件](https://github.com/Arvin-X/swarm/blob/master/docs/modules.txt).
 
@@ -30,6 +32,11 @@ apt-get install mongodb
 
 ```
 pip install pymongo
+```
+如果你想要使用nmap扩展模块，你需要在主机和从机上的python环境中都安装有libnmap库，并且在从机上有nmap工具。 可以使用pip获取libnmap：
+
+```
+pip install libnmap
 ```
 
 ## 使用方法
@@ -61,7 +68,8 @@ usage: swarm.py [-h] -m MODULE [-v] [-c] [-o PATH] [-t [TARGET [TARGET ...]]]
                 [--dir-dict PATH] [--dir-maxdepth NUM] [--dir-timeout TIME]
                 [--dir-not-exist FLAG] [--dir-quick-scan] [--dom-compbrute]
                 [--dom-dict PATH] [--dom-maxlevel NUM] [--dom-charset SET]
-                [--dom-levellen LEN] [--dom-timeout TIME]
+                [--dom-levellen LEN] [--dom-timeout TIME] [--nmap-ports PORTS]
+                [--nmap-top-ports NUM] [--nmap-ops ...]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -117,16 +125,16 @@ Common:
 Directory Scan:
   These option can be used to customize swarm action of directory scan
 
-  --dir-http-port PORT  Separated by '|' if you need multiple ports
+  --dir-http-port PORT  Separated by comma if you need multiple ports
   --dir-https-port PORT
-                        Separated by '|' if you need multiple ports
+                        Separated by comma if you need multiple ports
   --dir-compbrute       Use complete brute force without dictionary on target
   --dir-charset SET     Charset used for complete brute foce
   --dir-len LEN         Length interval of directory name or file name
   --dir-dict PATH       Path to dictionary used for directory scan
   --dir-maxdepth NUM    Max depth in directory and file scan
   --dir-timeout TIME    Timeout option for directory scan
-  --dir-not-exist FLAG  Separated by '|' if you need multiple flags
+  --dir-not-exist FLAG  Separated by double comma if you need multiple flags
   --dir-quick-scan      Use HEAD method instead of GET in scan
 
 Domain Scan:
@@ -137,8 +145,18 @@ Domain Scan:
   --dom-maxlevel NUM    Max level of subdomain name to scan
   --dom-charset SET     Charset used for complete brute foce
   --dom-levellen LEN    Length interval of subdomain name each level
-  --dom-timeout TIME    Timeout option for subdomain name scan  
+  --dom-timeout TIME    Timeout option for subdomain name scan
+
+Nmap Module:
+  These options can be used customize nmap action on slave hosts
+
+  --nmap-ports PORTS    Support format like '80,443,3306,1024-2048'
+  --nmap-top-ports NUM  Scan <number> most common ports
+  --nmap-ops ...        Nmap options list in nmap’s man pages, this should
+                        be the last in cli args
+
 ```
+
 如果你有较多的需求，最好使用配置文件而不是命令行参数来定义它们。
 
 ## License ##
