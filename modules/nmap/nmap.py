@@ -14,7 +14,7 @@ def add_cli_args(cli_parser):
 	nmap=cli_parser.add_argument_group('Nmap Module',
 			'These options can be used customize nmap action on slave hosts')
 	nmap.add_argument('--nmap-ports',dest='nmap_ports',metavar='PORTS',
-			help="Support format like '80|443|3306|1024-2048'")
+			help="Support format like '80,443,3306,1024-2048'")
 	nmap.add_argument('--nmap-top-ports',dest='nmap_top_ports',metavar='NUM',type=int,
 			help='Scan <number> most common ports')
 	nmap.add_argument('--nmap-ops',dest='nmap_options',action='store_true',

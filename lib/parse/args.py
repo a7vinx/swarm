@@ -6,7 +6,7 @@ from lib.core.exception import SwarmParseException
 
 def parse_port_list(ports):
 	"""
-	Parse ports string like '80|443|1-1024' into port list.
+	Parse ports string like '80;443;1-1024' into port list.
 
 	Returns:
 		A list consist of port, which type is int.
@@ -15,7 +15,7 @@ def parse_port_list(ports):
 	"""
 	try:
 		ret=[]
-		ports=ports.split('|')
+		ports=ports.split(',')
 		for curport in ports:
 			midindex=curport.find('-')
 			if midindex!=-1:
@@ -31,7 +31,9 @@ def parse_port_list(ports):
 				raise SwarmUseException('invalid ports')
 			ret.append(curport)
 		# remove duplicate element
-		return {}.fromkeys(ret).keys()
+		ret={}.fromkeys(ret).keys()
+		ret.sort()
+		return ret
 	except Exception as e:
 		raise SwarmParseException('ports')
 

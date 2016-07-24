@@ -19,9 +19,9 @@ def add_cli_args(cli_parser):
 	dir_scan=cli_parser.add_argument_group('Directory Scan',
 		'These option can be used to customize swarm action of directory scan')
 	dir_scan.add_argument('--dir-http-port',dest='dir_http_port',metavar='PORT',
-			help="Separated by '|' if you need multiple ports")
+			help="Separated by comma if you need multiple ports")
 	dir_scan.add_argument('--dir-https-port',dest='dir_https_port',metavar='PORT',
-			help="Separated by '|' if you need multiple ports")
+			help="Separated by comma if you need multiple ports")
 	dir_scan.add_argument('--dir-compbrute',dest='dir_compbrute',action='store_true',
 			help='Use complete brute force without dictionary on target')
 	dir_scan.add_argument('--dir-charset',dest='dir_charset',metavar='SET',
@@ -35,7 +35,7 @@ def add_cli_args(cli_parser):
 	dir_scan.add_argument('--dir-timeout',dest='dir_timeout',metavar='TIME',type=float,
 			help='Timeout option for directory scan')
 	dir_scan.add_argument('--dir-not-exist',dest='dir_not_exist',metavar='FLAG',
-			help="Separated by '|' if you need multiple flags")
+			help="Separated by double comma if you need multiple flags")
 	dir_scan.add_argument('--dir-quick-scan',dest='dir_quick_scan',action='store_true',
 			help='Use HEAD method instead of GET in scan')
 
@@ -201,7 +201,7 @@ class Slave(object):
 		super(Slave, self).__init__()
 		self._pool=Pool(args.thread_num)
 		self._timeout=args.dir_timeout
-		self._not_exist_flag=args.dir_not_exist
+		self._not_exist_flag=args.dir_not_exist.split(',,')
 		self._quick_mode=args.dir_quick_scan
 
 	def do_task(self,task):
