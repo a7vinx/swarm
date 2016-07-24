@@ -7,6 +7,7 @@ from libnmap.parser import NmapParser, NmapParserException
 from lib.core.exception import SwarmUseException
 from lib.core.exception import SwarmParseException
 from lib.parse.args import parse_port_list
+from lib.utils.utils import merge_ports
 
 def add_cli_args(cli_parser):
 	# nmap module options
@@ -76,7 +77,7 @@ class Master(object):
 					index=0
 					while index<len(portl):
 						subtaskl.append(curhost+'|'+'-p '+
-							','.join([str(x) for x in portl[index:index+self._args.task_granularity*500]]))
+							','.join(merge_ports(portl[index:index+self._args.task_granularity*500])))
 						index+=self._args.task_granularity*500
 			except SwarmParseException as e:
 				raise SwarmUseException('illeagal port format in nmap_ports')
@@ -89,29 +90,35 @@ class Master(object):
 	def handle_result(self,result):
 		# store it in mongodb
 		resultl=result.split('|')
-		if resultl[1]!='fail':
+		if resultl[1]!='f':
 			self._args.coll.insert({'host':resultl[0],'result':resultl[2]})
 
 	def report(self):
+		down_host=0
 		for curhost in self._args.target_list:
-			print '====================== '+curhost+' ======================'
 			host_infol=self._args.coll.find({'host':curhost})
 			# first print host info
 			nmap_report=NmapParser.parse(str(host_infol[0]['result']))
-			print 'Host is %s'%nmap_report.hosts[0].status
-			# print ports info
-			print("  PORT     STATE         SERVICE")
-			for cur_info in host_infol:
-				nmap_report=NmapParser.parse(str(cur_info['result']))
-				for serv in nmap_report.hosts[0].services:
-					pserv = "{0:>5s}/{1:3s}  {2:12s}  {3}".format(
-					str(serv.port),
-                    serv.protocol,
-                    serv.state,
-                    serv.service)
-					if len(serv.banner):
-						pserv += " ({0})".format(serv.banner)
-					print pserv
+			if nmap_report.hosts[0].status=='up':
+				print '====================== '+curhost+' ======================'
+				print 'Host is %s'%nmap_report.hosts[0].status
+				# print ports info
+				print("  PORT     STATE         SERVICE")
+				for cur_info in host_infol:
+					nmap_report=NmapParser.parse(str(cur_info['result']))
+					for serv in nmap_report.hosts[0].services:
+						pserv = "{0:>5s}/{1:3s}  {2:12s}  {3}".format(
+						str(serv.port),
+	                    serv.protocol,
+	                    serv.state,
+	                    serv.service)
+						if len(serv.banner):
+							pserv += " ({0})".format(serv.banner)
+						print pserv
+			else:
+				down_host+=1
+		print '=========================================================='
+		print 'Not shown: '+str(down_host)+' down host'
 		print '=========================================================='
 
 class Slave(object):
@@ -133,13 +140,16 @@ class Slave(object):
 		self._args = args
 
 	def do_task(self,task):
+		"""
+		TODO: multiple ip address for same domain name
+		"""
 		try:
 			taskl=task.split('|')
 			nmap_task=NmapProcess(taskl[0],taskl[1]+' '+' '.join(self._args.leftargsl))
 			rc=nmap_task.run()
 			if rc!=0:
-				return '|'.join([taskl[0],'fail',nmap_task.stderr])
-			return '|'.join([taskl[0],'success',nmap_task.stdout])
+				return '|'.join([taskl[0],'f',str(rc)+' '+nmap_task.stderr])
+			return '|'.join([taskl[0],'s',nmap_task.stdout])
 		# if there is no nmap on current host, quit quietly
 		except EnvironmentError, e:
 			raise SwarmUseException(str(e))

@@ -22,6 +22,7 @@ from lib.core.exception import SwarmFileException
 from lib.core.exception import SwarmNetException
 from lib.core.exception import SwarmParseException
 from lib.core.exception import SwarmModuleException
+from lib.core.exception import SwarmSlaveException
 
 
 class MSwarm(object):
@@ -133,8 +134,7 @@ class MSwarm(object):
 						self._swarm_num=len(r)
 						# if no swarm left
 						if self._swarm_num==0:
-							LOG.critical('no swarm left. task failed.')
-							break
+							raise SwarmSlaveException('no swarm left. task failed')
 						LOG.log(REPORT,'reorganize tasks in queue...')
 						self._manager.reorganize_tasks()
 						LOG.log(REPORT,'reorganization completed')

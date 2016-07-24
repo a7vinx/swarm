@@ -21,3 +21,6 @@ class SwarmFileException(SwarmBaseException):
 
 class SwarmDBException(SwarmBaseException):
 	pass
+
+class SwarmSlaveException(SwarmBaseException):
+	pass
