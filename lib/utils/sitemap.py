@@ -1,12 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-def draw_sitemap(contentlist):
+def draw_sitemap(contentl):
 	"""
 	Input format:
 
 	"""
 	# contentlist.sort(cmp=)
-	plist=contentlist
-	for cur in plist:
-		print cur
+	for cur in contentl:
+		print cur['url']
+		print cur['method']
+		print cur['content_type']
+		print cur['params']
+		print ''

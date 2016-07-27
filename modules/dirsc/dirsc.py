@@ -67,7 +67,6 @@ class Master(object):
 		Task:
 		target|dict|dict_path|start_line|scan_lines
 		target|comp|charset|begin_str|end_str
-		target;target;target|crawl
 		Result:
 		URL;URL;URL
 		no dir
@@ -78,7 +77,6 @@ class Master(object):
 		Get result:
 		no dir
 		https://github.com/something;https://github.com/something/something
-		https://github.com/something,GET,id,number,class;https://github.com/something/something,POST,XX,XX
 	"""
 	def __init__(self, args):
 		super(Master, self).__init__()
@@ -183,7 +181,6 @@ class Slave(object):
 		Task:
 		target|dict|dict_path|start_line|scan_lines
 		target|comp|charset|begin_str|end_str
-		target;target;target|crawl
 		Result:
 		URL;URL;URL
 		no dir
@@ -194,7 +191,6 @@ class Slave(object):
 		Get result:
 		no dir
 		https://github.com/something;https://github.com/something/something
-		https://github.com/something,GET,id,number,class;https://github.com/something/something,POST,XX,XX
 
 	"""
 	def __init__(self, args):
