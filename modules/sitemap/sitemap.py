@@ -8,6 +8,7 @@ import json
 import time
 from multiprocessing.dummy import Pool
 from multiprocessing import TimeoutError
+from lib.core.logger import LOG
 from lib.parse.args import parse_port_list
 from lib.core.exception import SwarmUseException
 from lib.utils.sitemap import draw_sitemap
@@ -50,7 +51,7 @@ class Master(object):
 		http://XX.com/XXX.php,post,multipart/form-data,param1=XX&param2=XX
 		Get result:
 		end
-		http://XX.com/XXX.php,post,multipart/form-data,param1=XX&param2=XX
+		http://XX.com/XXX.php?param1=XX&param2=XX,post,multipart/form-data,param3=XX
 
 	"""
 	def __init__(self, args):
@@ -105,8 +106,8 @@ class Master(object):
 
 		# generate subtask list
 		subtaskl=[]
-		for cur in range(0,len(self._waitl),self._args.task_granularity*2):
-			subtaskl.append('|'.join(self._waitl[cur:cur+self._args.task_granularity*2]))
+		for cur in range(0,len(self._waitl),self._args.task_granularity*4):
+			subtaskl.append('|'.join(self._waitl[cur:cur+self._args.task_granularity*4]))
 		self._waitl=[]
 		return subtaskl
 
@@ -146,7 +147,7 @@ class Slave(object):
 		http://XX.com/XXX.php,post,multipart/form-data,param1=XX&param2=XX
 		Get result:
 		end
-		http://XX.com/XXX.php,post,multipart/form-data,param1=XX&param2=XX
+		http://XX.com/XXX.php?param1=XX&param2=XX,post,multipart/form-data,param3=XX
 
 	"""
 	def __init__(self, args):
@@ -178,7 +179,7 @@ class Slave(object):
 		with target url.
 
 		Args:
-			target(string): URL (exclude query params of GET method)
+			target(string): URL (include query params of GET method)
 			method(string): http method name
 			content_type(string): it should be one of these:
 						empty string
@@ -192,7 +193,7 @@ class Slave(object):
 			separated by ';'. If nothing has been parsed out, return 'end'.
 			For example:
 	
-			http://XX.com/XXX.php,post,multipart/form-data,{param1:XX,param2:XX}
+			http://XX.com/XXX.php?param1=XX,post,multipart/form-data,{param2:XX,param3:XX}
 		"""
 		try:
 			result=''		
@@ -200,26 +201,23 @@ class Slave(object):
 			# first check url, if it redirect to another domain or this url is not valid, return.
 			r=requests.head(target,cookies=self._cookies)
 			if not self._check_exist_code(r.status_code):
-				srcdom='/'.join(target.split('/')[:3])
-				dstdom='/'.join(r.headers['Location'].split('/')[:3])
-				if r.status_code==301 and srcdom==dstdom:
-					# parse this redirected url
-					parsed=urlparse.urlparse(r.headers['Location'])
-					return self.crawl_url(parsed.scheme+'//'+parsed.netloc+parsed.path,
-						'get','',parsed.query)
-				else:
-					return ''
+				if 'Location' in r.headers.keys():
+					srcdom='/'.join(target.split('/')[:3])
+					dstdom='/'.join(r.headers['Location'].split('/')[:3])
+					if srcdom==dstdom:
+						# parse this redirected url
+						parsed=urlparse.urlparse(r.headers['Location'])
+						return self.crawl_url(parsed.scheme+'//'+parsed.netloc+parsed.path,
+							'get','',parsed.query)
+					else:
+						return ''
 
 			# get content of response from target url 
-			if method=='get':
-				params='?'+params if params!='' else ''
-				r=requests.get(target+params,cookies=self._cookies)
+			http_method=getattr(requests,method)
+			if content_type=='multipart/form-data':
+				r=http_method(target,files=json.loads(params),cookies=self._cookies)
 			else:
-				http_method=getattr(requests,method)
-				if content_type=='multipart/form-data':
-					r=http_method(target,files=json.loads(params),cookies=self._cookies)
-				else:
-					r=http_method(target,data=params,cookies=self._cookies)
+				r=http_method(target,data=params,cookies=self._cookies)
 			
 			# get all useful tags
 			soup=bs4.BeautifulSoup(r.content,'html.parser')
@@ -240,24 +238,24 @@ class Slave(object):
 					# deal with form method, content type and params
 					params=''
 					curtag['enctype']=curtag['enctype'] if curtag.attrs.has_key('enctype') else ''
+					# attention here, pass attrs argument to find_all instead of 'name=True'
+					names=curtag.find_all(attrs={'name':True})
 					if curtag['enctype']=='application/json' or curtag['enctype']=='multipart/form-data':
 						p_dict={}
-						names=curtag.find_all(name=True)
 						for name in names:
 							p_dict[name['name']]='param'
 						params=json.dumps(p_dict)
 					else:
-						names=curtag.find_all(name=True)
 						for name in names:
 							params=params+name['name']+'=param&'
 						params=params[:-1]
-					
+					curtag['method']=curtag['method'] if curtag.attrs.has_key('method') else 'get'
 					result+=','.join([parsed_url,curtag['method'],
 						curtag['enctype'],params])
 					result+=';'
 			
 			return result
-		except Exception, e:
+		except Exception as e:
 			return result
 
 	def _parse_url(self,dst,src):
@@ -266,9 +264,10 @@ class Slave(object):
 		convert url into complete url without params.
 
 		Returns:
-			String of complete url. if target url is not in the same domain, return '';
+			String of complete url with query params if it has. if target url is not in the 
+			same domain, return '';
 		"""
-		d_parsed=urlparse.urlparse(dst)
+		LOG.debug('detecting url: '+dst)
 		s_parsed=urlparse.urlparse(src)
 		s_scheme=s_parsed.scheme
 		s_netloc=s_parsed.netloc
@@ -277,13 +276,32 @@ class Slave(object):
 			s_cur_dir='/'.join(s_cur_dir.split('/')[:-1])
 		else:
 			s_cur_dir=s_cur_dir[:-1]
+
+		d_parsed=urlparse.urlparse(dst)
+		d_scheme=d_parsed.scheme
+		if d_parsed.netloc.find(':')==-1 and d_parsed.netloc!='':
+			if d_scheme=='http':
+				d_netloc=d_parsed.netloc+':80'
+			elif d_scheme=='https':
+				d_netloc=d_parsed.netloc+':443'
+			elif d_scheme=='':
+				d_netloc=d_parsed.netloc+':80' if s_scheme=='http' else d_parsed.netloc+':443'
+			else:
+				d_netloc=d_parsed.netloc
+		else:
+			d_netloc=d_parsed.netloc
+		# add '/' as prefix if the path does not starts with '/'
+		if d_parsed.path!='':
+			d_path='/'+d_parsed.path if d_parsed.path[0]!='/' else d_parsed.path
+		else:
+			d_path='/'
+		d_query=d_parsed.query
 		
 		# if it is a relative url
-		if d_parsed.netloc=='':
-			return urlparse.ParseResult(s_scheme,s_netloc,s_cur_dir+d_parsed.path,'','','').geturl()
-		elif d_parsed.netloc==s_netloc and (d_parsed.scheme==s_scheme or d_parsed.scheme==''):
-			path='/'+d_parsed.path if d_parsed.path[0]!='/' else d_parsed.path
-			return urlparse.ParseResult(s_scheme,s_netloc,path,'','','').geturl()
+		if d_netloc=='':
+			return urlparse.ParseResult(s_scheme,s_netloc,s_cur_dir+d_path,'',d_query,'').geturl()
+		elif d_netloc==s_netloc and (d_scheme==s_scheme or d_scheme==''):
+			return urlparse.ParseResult(s_scheme,s_netloc,d_path,'',d_query,'').geturl()
 		else:
 			return ''
 		

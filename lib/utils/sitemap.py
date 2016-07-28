@@ -3,13 +3,20 @@
 
 def draw_sitemap(contentl):
 	"""
-	Input format:
+	Args:
+		contentl: A mongodb cursor object which should has key 'domain','url','method',
+		'content_type','params'
 
 	"""
 	# contentlist.sort(cmp=)
+	if contentl.count()==0:
+		print 'nothing find here'
+		return
+	urll=[]
 	for cur in contentl:
-		print cur['url']
-		print cur['method']
-		print cur['content_type']
-		print cur['params']
-		print ''
+		re_url='/'+'/'.join(cur['url'].split('/')[3:])
+		urll.append(re_url.split('?')[0])
+	urll={}.fromkeys(urll).keys()
+	urll.sort()
+	for cur in urll:
+		print cur
