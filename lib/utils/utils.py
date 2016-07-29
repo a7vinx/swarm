@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import copy
 
 def merge_ports(portl):
 	"""
@@ -28,3 +29,18 @@ def merge_ports(portl):
 	if ret[-1].find('-')==-1:
 		ret.append(str(portl[-1]))
 	return ret
+
+def merge_querys(url1,url2):
+	"""
+	Merge two query params string like 'p1=param&p2=param' into one query string 
+	with Deduplication. 
+	"""
+	l1=[x.split('=')[1] for x in url1.split('&') if len(x.split('='))==2]
+	l2=[x.split('=')[1] for x in url2.split('&') if len(x.split('='))==2]
+	retl=copy.copy(l1)
+	for x in l2:
+		if x not in l1:
+			retl.append(x)
+	rets='=param&'.join(retl)+'=param' if len(retl)!=0 else ''
+	return rets
+

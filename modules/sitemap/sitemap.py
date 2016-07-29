@@ -11,6 +11,7 @@ from multiprocessing import TimeoutError
 from lib.core.logger import LOG
 from lib.parse.args import parse_port_list
 from lib.core.exception import SwarmUseException
+from lib.utils.utils import merge_querys
 from lib.utils.sitemap import draw_sitemap
 
 def add_cli_args(cli_parser):
@@ -117,13 +118,21 @@ class Master(object):
 			for ret in resultl:
 				# first check duplicate
 				retl=ret.split(',')
-				if None!=self._args.coll.find_one({'url':retl[0]}):
+				returl=retl[0].split('?')[0]
+				retquery=retl[0].split('?')[1] if len(retl[0].split('?'))==2 else ''
+				dup=self._args.coll.find_one({'url':returl})
+				# if it duplicate, update query params and do not add it into queue
+				if dup!=None:
+					merged=merge_querys(retquery,dup['query'])
+					self._args.coll.update({'url':returl},{'$set':{'query':merged}})
 					continue
 				# else insert into database and append to waiting list
 				key='/'.join(retl[0].split('/')[:3])
-				self._args.coll.insert({'domain':key,'url':retl[0],'method':retl[1],
-					'content_type':retl[2],'params':','.join(retl[3:])})
-				self._waitl.append(ret)
+				self._args.coll.insert({'domain':key,'url':returl,'query':retquery,
+					'method':retl[1],'content_type':retl[2],'params':','.join(retl[3:])})
+				# if it ends with '.jpg','.png' etc.
+				if returl.split('.')[-1] not in ['gif','jpg','jpeg','png','bmp','doc','js']:
+					self._waitl.append(ret)
 
 	def report(self):
 		for curdom in self._doml:
@@ -171,7 +180,8 @@ class Slave(object):
 			argsl=subtask.split(',')
 			resultl.append(self._pool.apply_async(self.crawl_url,args=(argsl[0],argsl[1],argsl[2],argsl[3])))
 			time.sleep(self._t_interval)
-		return self._get_result(resultl)
+		retl=self._get_resultl(resultl)
+		return self._proc_result(retl)
 
 	def crawl_url(self,target,method,content_type,params):
 		"""
@@ -189,14 +199,14 @@ class Slave(object):
 			params(string): params
 
 		Returns:
-			A list consist of strings, which has format of "URL,METHOD,CONTENT-TYPE,PARAMS", 
-			separated by ';'. If nothing has been parsed out, return 'end'.
+			A list consist of sublist, which has format of [URL,METHOD,CONTENT-TYPE,PARAMS], 
 			For example:
 	
-			http://XX.com/XXX.php?param1=XX,post,multipart/form-data,{param2:XX,param3:XX}
+			[['http://XX.com/XXX.php?param1=XX','post','multipart/form-data',
+			'{param2:XX,param3:XX}'],[,get,,]]
 		"""
 		try:
-			result=''		
+			result=[]		
 
 			# first check url, if it redirect to another domain or this url is not valid, return.
 			r=requests.head(target,cookies=self._cookies)
@@ -228,10 +238,10 @@ class Slave(object):
 				if curtag['href'].startswith('javascript:'):
 					continue
 				parsed_url=self._parse_url(curtag['href'],target)
-				result=result+parsed_url+',get,,;' if parsed_url!='' else result
+				result.append([parsed_url,'get','',''])
 			for curtag in srcs:
 				parsed_url=self._parse_url(curtag['src'],target)
-				result=result+parsed_url+',get,,;' if parsed_url!='' else result
+				result.append([parsed_url,'get','',''])
 			for curtag in actions:
 				parsed_url=self._parse_url(curtag['action'],target)
 				if parsed_url!='':
@@ -249,10 +259,9 @@ class Slave(object):
 						for name in names:
 							params=params+name['name']+'=param&'
 						params=params[:-1]
-					curtag['method']=curtag['method'] if curtag.attrs.has_key('method') else 'get'
-					result+=','.join([parsed_url,curtag['method'],
+					curtag['method']=curtag['method'].lower() if curtag.attrs.has_key('method') else 'get'
+					result.append([parsed_url,curtag['method'],
 						curtag['enctype'],params])
-					result+=';'
 			
 			return result
 		except Exception as e:
@@ -305,20 +314,43 @@ class Slave(object):
 		else:
 			return ''
 		
-	def _get_result(self,resultl):
-		result=''
-		# get result from list
+	def _get_resultl(self,resultl):
+		retl=[]
+		# get result from eflist
 		for cur in resultl:
 			try:
-				result+=cur.get(timeout=self._timeout)
+				retl.extend(cur.get(timeout=self._timeout))
 			except TimeoutError as e:
 				continue
-		# deal with result
-		if result=='':
-			result='end'
-		else:
-			result=result[:-1]
-		return result
+		return retl
+
+	def _proc_result(self,resultl):
+		"""
+		Deduplicate result list and return result string.
+		"""
+		rets=''
+		r_url=''
+		r_querys=''
+		resultl.sort()
+
+		for cur in resultl:
+			if len(cur)!=4 or cur[0]=='':
+				continue
+
+			cururl=cur[0].split('?')[0]
+			curquerys=cur[0].split('?')[1] if len(cur[0].split('?'))==2 else ''
+			if cururl==r_url:
+				r_querys=merge_querys(curquerys,r_querys)
+			else:
+				if r_url!='':
+					r_qurl=r_url+'?'+r_querys if r_querys!='' else r_url
+					rets+=','.join([r_qurl,cur[1],cur[2],cur[3]])
+					rets+=';'
+				r_url=cururl
+				r_querys=curquerys
+
+		rets='end' if rets=='' else rets[:-1]
+		return rets
 
 	def _check_exist_code(self,code):
 		if code<300 or code==401 or code==403:

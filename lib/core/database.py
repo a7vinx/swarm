@@ -13,7 +13,7 @@ def init_db(addr,port,modname):
 		SwarmDBException: An error occurred when try to init db.
 	"""
 	try:
-		timeformat='%Y-%m-%d_%X'
+		timeformat='%Y_%m_%d_%H_%M_%S'
 		dbclient = pymongo.MongoClient(addr, port)
 		return dbclient.swarm,dbclient.swarm[modname+'_'+time.strftime(timeformat,time.localtime())]
 	except Exception, e:

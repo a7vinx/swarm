@@ -4,8 +4,8 @@
 def draw_sitemap(contentl):
 	"""
 	Args:
-		contentl: A mongodb cursor object which should has key 'domain','url','method',
-		'content_type','params'
+		contentl: A mongodb cursor object which should has key 'domain','url','query',
+		'method','content_type','params'
 
 	"""
 	# contentlist.sort(cmp=)
@@ -15,7 +15,7 @@ def draw_sitemap(contentl):
 	urll=[]
 	for cur in contentl:
 		re_url='/'+'/'.join(cur['url'].split('/')[3:])
-		urll.append(re_url.split('?')[0])
+		urll.append(re_url)
 	urll={}.fromkeys(urll).keys()
 	urll.sort()
 	for cur in urll:
