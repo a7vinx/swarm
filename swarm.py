@@ -14,7 +14,6 @@ from lib.utils.banner import begin_banner
 from lib.utils.banner import end_banner
 
 def main():
-	begin_banner()
 	args=argparse.Namespace()
 	try:
 		# get all available modules
@@ -23,7 +22,8 @@ def main():
 		# arguments parsed from cli will cover origin arguments in configuration file
 		configfile_parse(args)
 		cli_parse(args)
-
+		begin_banner()
+		
 		init_logger(args.logfile,args.verbose,args.disable_col)
 	except SwarmBaseException as e:
 		print str(e)

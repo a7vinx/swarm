@@ -16,7 +16,7 @@ from lib.utils.sitemap import draw_sitemap
 
 def add_cli_args(cli_parser):
 	sitemap=cli_parser.add_argument_group('Sitemap Crawler',
-		'These options can be used to customize sitemap crawler')
+		'These options can be used to customize sitemap crawler, not support js parse yet')
 	sitemap.add_argument('--map-seed',dest='map_seed',metavar='SEED',
 			help='Separated by comma if you have multiple seeds')
 	sitemap.add_argument('--map-http-port',dest='map_http_port',metavar='PORT',
