@@ -53,7 +53,7 @@ class MSwarm(object):
 
 	def waken_swarm(self):
 		"""
-		Waken all slave hosts to run swarm-s.py and send args to them.
+		Waken all slave hosts to run swarm-s and send args to them.
 		Synchronize data if need.
 		"""
 		if self._args.waken_cmd!='':
