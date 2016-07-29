@@ -53,7 +53,8 @@ def configfile_parse(args):
 				module.parse_conf(args,conf_parser)
 		except ImportError as e:
 			# print repr(e)
-			raise SwarmModuleException('an error occured when try to import module: '+curmod)
+			raise SwarmModuleException('an error occured when try to import module: '+curmod+
+				' info: '+repr(e))
 		except Exception as e:
 			raise SwarmModuleException('an error occured when parse configuration file of module:'+
 				curmod+' info: '+repr(e))

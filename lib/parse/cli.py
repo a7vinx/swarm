@@ -77,7 +77,8 @@ def cli_parse(args):
 			module=importlib.import_module('modules.'+curmod+'.'+curmod)
 			module.add_cli_args(parser)
 	except ImportError as e:
-		raise SwarmModuleException('an error occurred when try to import module: '+curmod)
+		raise SwarmModuleException('an error occurred when try to import module: '+curmod+
+			' info: '+repr(e))
 	except Exception as e:
 		raise SwarmModuleException('an error occurred when add cli parse option of module:'+
 			curmod+' info: '+repr(e))

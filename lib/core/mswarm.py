@@ -60,7 +60,7 @@ class MSwarm(object):
 			LOG.info('send waken command "%s"to swarm'%(self._args.waken_cmd.replace('ARGS',
 				'-p %d'%self._args.s_port)))
 			self._send2slave(self._args.waken_cmd.replace('ARGS','-p %d'%self._args.s_port))
-			LOG.log(REPORT,'sending waken command completed.')
+			LOG.log(REPORT,'sending waken command completed')
 			LOG.info('try to detect swarm status')
 		# time for slave host to create listen on target port
 		time.sleep(2)
@@ -96,32 +96,41 @@ class MSwarm(object):
 		# start the manager
 		self._manager=MSwarmManager(self._args.timeout,address=('', self._args.m_port), 
 			authkey=self._args.authkey)
-
-		LOG.info('load module: '+self._args.mod)
-		LOG.info('begin to decompose task...')
 		try:
 			module=importlib.import_module('modules.'+self._args.mod+'.'+self._args.mod)
 		except ImportError as e:
 			raise SwarmModuleException('an error occured when load module:'+self._args.mod)	
-		# create Master class of this module
+		LOG.info('load module: '+self._args.mod)
+		LOG.info('begin to decompose task...')
 		mod_master=getattr(module,'Master')(self._args)
+
+		# begin first round of tasks decomposition and distribution
+		roundn=0
 		self._manager.init_task_statistics()
 		while True:
 			subtaskl=mod_master.generate_subtasks()
-			if len(subtaskl)==0:
+			taskn=len(subtaskl)
+			if taskn==0:
 				break
-			LOG.info('put task into queue...')
+			roundn+=1
+			LOG.log(REPORT,'begin round %d'%roundn)
+			LOG.info('round %d: put task into queue...'%roundn)
 			for cur in subtaskl:
 				self._manager.put_task(self._args.mod,cur)
-			LOG.log(REPORT,'putting task into queue completed.')
-			LOG.info('begin to get result from swarm...')
+			LOG.log(REPORT,'round %d: %d tasks have been put into queue'%(roundn,taskn))
+			LOG.info('round %d: get result from swarm...'%roundn)
+
 			# get result
+			confirmedn=0
 			self._manager.prepare_get_result()
 			while True:
 				try:
 					result=self._manager.get_result()
 					if result=='':
 						break
+					confirmedn+=1
+					LOG.log(REPORT,'round %d: %d/%d tasks have been completed'%(roundn,
+						confirmedn,taskn))
 					mod_master.handle_result(result)
 				except Queue.Empty as e:
 					# check number of slave host, if someone has lost response, reorganize tasks 
@@ -141,7 +150,8 @@ class MSwarm(object):
 					else:
 						LOG.log(REPORT,'all swarm works fine. now num: %d'%self._swarm_num)
 					# continue 
-		LOG.log(REPORT,'task completed')
+			LOG.log(REPORT,'round %d over'%roundn)
+		LOG.log(REPORT,'all tasks have been comfirmed')
 		# do final report now
 		mod_master.report()
 		self._shutdown()
@@ -172,7 +182,6 @@ class MSwarm(object):
 		LOG.info('connect to swarm...')
 		ret=[]
 		for index in range(0,len(self._swarm_list)):
-			LOG.debug('starting thread %d to deal socket'%(index))
 			t=threading.Thread(target=self._send2one_r,
 				args=(content,self._swarm_list[index],self._args.s_port,ret))
 			t.start()
@@ -183,7 +192,6 @@ class MSwarm(object):
 
 	def _send2slave(self,content):
 		for index in range(0,len(self._swarm_list)):
-			LOG.debug('starting thread %d to deal socket'%(index))
 			t=threading.Thread(target=self._send2one,
 				args=(content,self._swarm_list[index],self._swarm_port_list[index]))
 			t.start()
@@ -193,7 +201,7 @@ class MSwarm(object):
 		try:
 			s=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 			s.settimeout(self._args.timeout)
-			LOG.debug('connecting to %s:%d'%(ip,port))
+			LOG.debug('connect to %s:%d...'%(ip,port))
 			s.connect((ip,port))
 			s.send(content)
 			s.close()
@@ -207,7 +215,7 @@ class MSwarm(object):
 		try:
 			s=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 			s.settimeout(self._args.timeout)
-			LOG.debug('connecting to %s:%d'%(ip,port))
+			LOG.debug('connect to %s:%d...'%(ip,port))
 			s.connect((ip,port))
 			s.send(content.replace('__EOF__','__EOF___'))
 			s.send('__EOF__')

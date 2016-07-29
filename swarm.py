@@ -10,8 +10,11 @@ from lib.core.logger import LOG
 from lib.core.logger import init_logger
 from lib.core.mswarm import MSwarm
 from lib.core.exception import SwarmBaseException
+from lib.utils.banner import begin_banner
+from lib.utils.banner import end_banner
 
 def main():
+	begin_banner()
 	args=argparse.Namespace()
 	try:
 		# get all available modules
@@ -24,6 +27,7 @@ def main():
 		init_logger(args.logfile,args.verbose,args.disable_col)
 	except SwarmBaseException as e:
 		print str(e)
+		end_banner()
 		return
 
 	# now use logger instead of simple print
@@ -34,7 +38,8 @@ def main():
 		m.parse_distribute_task()
 	except SwarmBaseException as e:
 		LOG.critical(str(e))
-		return
+	finally:
+		end_banner()
 
 	
 if __name__ == '__main__':

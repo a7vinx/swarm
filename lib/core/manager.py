@@ -51,8 +51,7 @@ class MSwarmManager(SwarmManager):
 		Put task into task queue, update current task list and current task number meanwhile.
 		"""
 		task="|".join([pre_str,str(self._cur_task_num),task])
-		tasklog=task[:task.find('\n')]+'...' if task.find('\n')!=-1 else task
-		LOG.debug('put task into queue:%s'%tasklog)
+		LOG.debug('put task: %s'%task.replace('\n',' '))
 		self._task_queue.put(task)
 		self._cur_task_num+=1
 		self._cur_task_list.append(task)
@@ -86,8 +85,7 @@ class MSwarmManager(SwarmManager):
 			return self.get_result()
 		self._task_confirm_list[index]=1
 		self._task_confirm_num+=1
-		resultlog=result[:result.find('\n')]+'...' if result.find('\n')!=-1 else result
-		LOG.log(REPORT,'task index:%d result:%s'%(index,resultlog))
+		LOG.debug('get result: %s'%task_result.replace('\n',' '))
 		return result
 
 	def reorganize_tasks(self):
@@ -101,8 +99,7 @@ class MSwarmManager(SwarmManager):
 		for cur_index,cur in enumerate(self._task_confirm_list):
 			if cur==0:
 				tmptask=self._cur_task_list[cur_index]
-				tasklog=tmptask[:tmptask.find('\n')]+'...' if tmptask.find('\n')!=-1 else tmptask
-				LOG.debug('put task into queue again: %s'%tasklog)
+				LOG.debug('put task: %s'%tasklog.replace('\n',' '))
 				self._task_queue.put(self._cur_task_list[cur_index])
 
 
@@ -129,8 +126,7 @@ class SSwarmManager(SwarmManager):
 		
 	def get_task(self):
 		task=self._task_queue.get()
-		tasklog=task[:task.find('\n')]+'...' if task.find('\n')!=-1 else task
-		LOG.debug('get task:%s'%tasklog)
+		LOG.debug('get task: %s'%task.replace('\n',' '))
 		taskl=task.split('|')
 		self._cur_task_flag=taskl[0]
 		self._cur_task_index=taskl[1]
@@ -139,8 +135,7 @@ class SSwarmManager(SwarmManager):
 
 	def put_result(self,result):
 		result="|".join([self._cur_task_flag,self._cur_task_index,result])
-		resultlog=result[:result.find('\n')]+'...' if result.find('\n')!=-1 else result
-		LOG.debug('put result:%s'%resultlog)
+		LOG.debug('put result:%s'%result.replace('\n',' '))
 		self._result_queue.put(result)
 
 
