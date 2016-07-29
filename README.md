@@ -54,7 +54,7 @@ nc -e /bin/sh -l 9191
 And use waken command like:
 
 ```
-swarm ARGS
+swarm-s ARGS
 ```
 
 You need to leave "ARGS" in your command and ensure it will be cli args passed to swarm for swarm to replace it with some necessary arguments like '-p'.
