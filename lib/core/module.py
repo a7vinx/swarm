@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import os
+import modules
+import pkgutil
 from lib.core.exception import SwarmModuleException
 
 def get_modules():
@@ -12,14 +14,11 @@ def get_modules():
 		SwarmModuleException: An error occurred when try to get modules or no available module.
 	"""
 	try:
-		ret=[]
-		content=os.listdir('./modules')
-		for x in content:
-			if x!='module_template' and not x.startswith(('.','__')):
-				ret.append(x)
+		s=os.path.dirname(modules.__file__)
+		ret=[name for _, name, _ in pkgutil.iter_modules([s])]
 	except Exception as e:
-		raise SwarmModuleException('an error occurred when try to get modules, please check modules'
-			' in directory ./modules/')
+		raise SwarmModuleException('an error occurred when try to get modules, please check'
+			' modules of swarm')
 
 	# check available module
 	if len(ret)==0:

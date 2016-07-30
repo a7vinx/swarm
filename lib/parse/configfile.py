@@ -9,7 +9,7 @@ from lib.core.exception import SwarmModuleException
 def configfile_parse(args):
 	try:
 		conf_parser=ConfigParser.ConfigParser()
-		conf_parser.read('swarm.conf')
+		conf_parser.read('/etc/swarm/swarm.conf')
 
 		# output options
 		args.logfile=conf_parser.get('Output','logfile')
@@ -49,7 +49,7 @@ def configfile_parse(args):
 			for curmod in args.modules:
 				module=importlib.import_module('modules.'+curmod+'.'+curmod)
 				conf_parser=ConfigParser.ConfigParser()
-				conf_parser.read('./etc/'+curmod+'.conf')
+				conf_parser.read('/etc/swarm/'+curmod+'.conf')
 				module.parse_conf(args,conf_parser)
 		except ImportError as e:
 			# print repr(e)

@@ -5,7 +5,7 @@ import argparse
 
 from lib.parse.configfile import configfile_parse
 from lib.parse.cli import cli_parse
-from lib.core.modules import get_modules
+from lib.core.module import get_modules
 from lib.core.logger import LOG
 from lib.core.logger import init_logger
 from lib.core.mswarm import MSwarm
