@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import copy
+from lib.core.exception import SwarmParseException
 
 def merge_ports(portl):
 	"""
@@ -43,4 +44,28 @@ def merge_querys(url1,url2):
 			retl.append(x)
 	rets='=param&'.join(retl)+'=param' if len(retl)!=0 else ''
 	return rets
+
+def input2json(input):
+	"""
+	Add double quotes in argument "input" in order to make json.loads() can execute 
+	correctly.
+	"""
+	try:
+		ret=input
+		readyl=['{','}',':',',','[',']','"']
+		for sym in ['{','}',':',',','[',']']:
+			index=ret.find(sym)
+			while index!=-1:
+				if index==0:
+					ret=ret[0]+'"'+ret[1:] if ret[1]!='"' else ret 
+				elif index==len(ret)-1:
+					ret=ret[:-1]+'"'+ret[-1] if ret[-2]!='"' else ret
+				else:
+					ret=ret[:index+1]+'"'+ret[index+1:] if ret[index+1] not in readyl else ret
+					ret=ret[:index]+'"'+ret[index:] if ret[index-1] not in readyl else ret
+				# find next
+				index=ret.find(sym,index+1)
+		return ret
+	except Exception, e:
+		raise SwarmParseException('json')
 

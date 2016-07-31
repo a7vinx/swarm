@@ -32,7 +32,7 @@ with open('README.md') as f:
 			data_files=[
 				('/etc/swarm',['swarm.conf']),
 				('/etc/swarm',['etc/dirsc.conf','etc/domainsc.conf','etc/nmap.conf',
-					'etc/sitemap.conf']),
+					'etc/sitemap.conf','etc/intruder.conf']),
 			],
 			classifiers = [
 				'Programming Language :: Python :: 2.7',

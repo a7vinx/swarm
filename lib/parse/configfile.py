@@ -19,8 +19,7 @@ def configfile_parse(args):
 		# target options
 		args.target=conf_parser.get('Target','target')
 		args.target_file=conf_parser.get('Target','target_file')
-		if args.target!='':
-			args.target=args.target.split()
+		args.target=args.target.split()
 
 		# swarm options
 		args.swarm=conf_parser.get('Swarm','swarm')
@@ -32,8 +31,7 @@ def configfile_parse(args):
 		args.s_port=conf_parser.getint('Swarm','s_port')
 		args.authkey=conf_parser.get('Swarm','authkey')
 		args.sync_data=conf_parser.getboolean('Swarm','sync_data')
-		if args.swarm!='':
-			args.swarm=args.swarm.split()
+		args.swarm=args.swarm.split()
 
 		# database options
 		args.db_addr=conf_parser.get('Database','db_addr')
