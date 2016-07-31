@@ -1,16 +1,17 @@
 # swarm
-v0.5.0
+v0.6.0
 
 English | [中文](https://github.com/Arvin-X/swarm/blob/master/docs/README-zh-CN.md).
 
 Swarm is an open source modular distributed penetration testing Tool that use distributed task queue to implement communication in the master-slave mode system and use MongoDB for data storage. It consists of a distributed framework and function modules. The function module can be an entirely new implement of some penetration functions or it can be a simple wrap of an existing tool to implement distributed functionality. Because of the modularity architecture it is easy to customize and extend new features under the distributed framework.
 
-Now in this version 0.5.0 it has four modules:
+Now in this version 0.6.0 it has five modules:
 
 - Subdomain name scan module
 - Directories and files scan module
 - Nmap extension module
 - Sitemap crawler module
+- Intruder module
 
 If you want to write your own module, you can read [this](https://github.com/Arvin-X/swarm/blob/master/docs/modules.txt).
 
@@ -62,21 +63,23 @@ You need to leave "ARGS" in your command and ensure it will be cli args passed t
 Basic usage of swarm:
 
 ```
-usage: swarm.py [-h] -m MODULE [-v] [-c] [-o PATH] [-t [TARGET [TARGET ...]]]
-                [-T PATH] [-s [SWARM [SWARM ...]]] [-S PATH] [--waken CMD]
-                [--timeout TIME] [--m-addr ADDR] [--m-port PORT]
-                [--s-port PORT] [--authkey KEY] [--db-addr ADDR]
-                [--db-port PORT] [--process NUM] [--thread NUM] [--taskg NUM]
-                [--dom-compbrute] [--dom-dict PATH] [--dom-maxlevel NUM]
-                [--dom-charset SET] [--dom-levellen LEN] [--dom-timeout TIME]
-                [--dir-http-port PORT] [--dir-https-port PORT]
-                [--dir-compbrute] [--dir-charset SET] [--dir-len LEN]
-                [--dir-dict PATH] [--dir-maxdepth NUM] [--dir-timeout TIME]
-                [--dir-not-exist FLAG] [--dir-quick-scan] [--nmap-ports PORTS]
-                [--nmap-top-ports NUM] [--nmap-ops ...] [--map-seed SEED]
-                [--map-http-port PORT] [--map-https-port PORT]
-                [--map-cookies COOKIES] [--map-interval TIME]
-                [--map-timeout TIME]
+usage: swarm [-h] -m MODULE [-v] [-c] [-o PATH] [-t [TARGET [TARGET ...]]]
+             [-T PATH] [-s [SWARM [SWARM ...]]] [-S PATH] [--waken CMD]
+             [--timeout TIME] [--m-addr ADDR] [--m-port PORT] [--s-port PORT]
+             [--authkey KEY] [--db-addr ADDR] [--db-port PORT] [--process NUM]
+             [--thread NUM] [--taskg NUM] [--dom-compbrute] [--dom-dict PATH]
+             [--dom-maxlevel NUM] [--dom-charset SET] [--dom-levellen LEN]
+             [--dom-timeout TIME] [--dir-http-port PORT]
+             [--dir-https-port PORT] [--dir-compbrute] [--dir-charset SET]
+             [--dir-len LEN] [--dir-dict PATH] [--dir-maxdepth NUM]
+             [--dir-timeout TIME] [--dir-not-exist FLAG] [--dir-quick-scan]
+             [--nmap-ports PORTS] [--nmap-top-ports NUM] [--nmap-ops ...]
+             [--int-target [URLS [URLS ...]]] [--int-method METHOD]
+             [--int-headers JSON] [--int-cookies COOKIES] [--int-body BODY]
+             [--int-payload PAYLOAD] [--int-flag FLAGS] [--int-timeout TIME]
+             [--map-seed SEED] [--map-http-port PORT] [--map-https-port PORT]
+             [--map-cookies COOKIES] [--map-interval TIME]
+             [--map-timeout TIME]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -90,7 +93,8 @@ Output:
   -o PATH               Record log in target file
 
 Target:
-  At least one of these options has to be provided to define target
+  At least one of these options has to be provided to define target unless
+  there is another special option for defining target in the module
 
   -t [TARGET [TARGET ...]]
                         Separated by blank (eg: github.com 127.0.0.0/24
@@ -162,8 +166,31 @@ Nmap Module:
   --nmap-ops ...        Nmap options list in nmap’s man pages, this should
                         be the last in cli args
 
+Intruder:
+  Use indicator symbol '@n@' where 'n' should be a number, like '@0@','@1@'
+  etc to specify attack point in option 'int_target' and 'int_body'. Use
+  'int_payload' option to specify payload used on these attack point to
+  complete this attack.
+
+  --int-target [URLS [URLS ...]]
+                        Use this option instead of '-t' or '-T' options to
+                        specify targets,separated by comma
+  --int-method METHOD   Http method used in this attack
+  --int-headers JSON    A JSON format data.(eg: {"User-
+                        Agent":"Mozilla/5.0","Origin":"XXX"})
+  --int-cookies COOKIES
+                        Separated by comma. (eg: PHPSESSIONID:XX,token:XX)
+  --int-body BODY       HTTP or HTTPS body. You can use indicator symbol in
+                        this option
+  --int-payload PAYLOAD
+                        The format should follow '@0@:PATH,@1@:NUM-
+                        NUM:CHARSET'
+  --int-flag FLAGS      Separated by double comma if you have multiple flags
+  --int-timeout TIME    Timeout option for intruder module
+
 Sitemap Crawler:
-  These options can be used to customize sitemap crawler
+  These options can be used to customize sitemap crawler, not support js
+  parse yet
 
   --map-seed SEED       Separated by comma if you have multiple seeds
   --map-http-port PORT  Separated by comma if you need multiple ports
