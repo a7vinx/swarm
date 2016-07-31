@@ -73,6 +73,8 @@ class MSwarm(object):
 		r=self._send2swarm_r(s_args)
 		self._swarm_num=len(r)
 		LOG.log(REPORT,'waken %d slaves in swarm'%self._swarm_num)
+		if self._swarm_num==0:
+			raise SwarmNetException('no salve can work now. mission terminates')
 		
 		# do data sync here
 		if self._args.sync_data==True:	

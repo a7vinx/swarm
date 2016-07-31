@@ -9,7 +9,6 @@ from lib.utils.brute import generate_bflist
 from lib.utils.subtasks import generate_compbrute_subtask
 from lib.utils.subtasks import generate_dictbrute_subtask
 from lib.core.logger import LOG
-from lib.core.logger import REPORT
 from lib.core.exception import SwarmUseException
 from lib.core.exception import SwarmParseException
 

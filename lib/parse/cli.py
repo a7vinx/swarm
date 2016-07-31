@@ -23,7 +23,8 @@ def cli_parse(args):
 
 	# target option
 	target=parser.add_argument_group('Target',
-		'At least one of these options has to be provided to define target')
+		'At least one of these options has to be provided to define target unless there is '
+		'another special option for defining target in the module')
 	target.add_argument('-t',dest='target',metavar='TARGET',nargs='*',
 			help='Separated by blank (eg: github.com 127.0.0.0/24 192.168.1.5)')
 	target.add_argument('-T',dest='target_file',metavar='PATH',

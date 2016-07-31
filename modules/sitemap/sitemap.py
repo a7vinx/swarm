@@ -167,8 +167,6 @@ class Slave(object):
 		# parse cookies
 		if args.map_cookies!='':
 			cookiesl=args.map_cookies.split(',')
-			for cur in cookiesl:
-				cur.split(':')
 			self._cookies={x.split(':')[0]:x.split(':')[1] for x in cookiesl}
 		else:
 			self._cookies={}
