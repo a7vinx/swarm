@@ -260,7 +260,7 @@ class Slave(object):
 				r=requests.get(target)
 				if self._check_exist_code(r.status_code):
 					for cur in self._not_exist_flag:
-						if r.content.find(cur)!=-1:
+						if r.text.find(cur)!=-1:
 							return ''
 					return target+';'
 			return ''

@@ -228,7 +228,7 @@ class Slave(object):
 				r=http_method(target,data=params,cookies=self._cookies)
 			
 			# get all useful tags
-			soup=bs4.BeautifulSoup(r.content,'html.parser')
+			soup=bs4.BeautifulSoup(r.text,'html.parser')
 			hrefs=soup.find_all(href=True)
 			actions=soup.find_all(action=True)
 			srcs=soup.find_all(src=True)
