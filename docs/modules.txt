@@ -19,92 +19,92 @@ module template.
 """
 
 def add_cli_args(cli_parser):
-	"""
-	This function will be called to add cli arguments. The cli_parser is an instance of 
-	class argparse.ArgumentParser. You should first add an arguments group by func 
-	add_argument_group, then add your module arguments by func add_argument. This func 
-	should return nothing.
-	"""
-	pass
+    """
+    This function will be called to add cli arguments. The cli_parser is an instance of 
+    class argparse.ArgumentParser. You should first add an arguments group by func 
+    add_argument_group, then add your module arguments by func add_argument. This func 
+    should return nothing.
+    """
+    pass
 
 def parse_conf(args,conf_parser):
-	"""
-	This function will be called to parse arguments in configuration file before parsing 
-	arguments from cli. It means args in cli has higher priority and eponymous args 
-	from cli will cover args in configuration file. The args in arguments is an instance
-	of argparse.Namespace. The conf_parser in argument is an instance of 
-	ConfigParser.ConfigParser. You should parse args into object 'args' by using
-	'args.XX=conf_parser.getint(XXX,XXX) '. This func should return nothing.
-	"""
-	pass
+    """
+    This function will be called to parse arguments in configuration file before parsing 
+    arguments from cli. It means args in cli has higher priority and eponymous args 
+    from cli will cover args in configuration file. The args in arguments is an instance
+    of argparse.Namespace. The conf_parser in argument is an instance of 
+    ConfigParser.ConfigParser. You should parse args into object 'args' by using
+    'args.XX=conf_parser.getint(XXX,XXX) '. This func should return nothing.
+    """
+    pass
 
 class Master(object):
-	"""
-	Class Master which will be instantiated to generate subtask list, deal with result 
-	gotten from swarm and report final result.
-	"""
-	def __init__(self, args):
-		"""
-		The args in arguments is an instance of argparse.Namespace and it stores all 
-		arguments of swarm. You can get value of attribute XX by simply using 'args.XX'. 
-		You should do your module initialization for Master here.
-		"""
-		super(Master, self).__init__()
-		self._args = args	
+    """
+    Class Master which will be instantiated to generate subtask list, deal with result 
+    gotten from swarm and report final result.
+    """
+    def __init__(self, args):
+        """
+        The args in arguments is an instance of argparse.Namespace and it stores all 
+        arguments of swarm. You can get value of attribute XX by simply using 'args.XX'. 
+        You should do your module initialization for Master here.
+        """
+        super(Master, self).__init__()
+        self._args = args    
 
-	def generate_subtasks(self):
-		"""
-		This function will be called to generate subtask list and it will be called in a
- 		loop until it return an empty list. The Swarm framework will first call this func 
- 		to get subtask list (item in the list should be a string describing one subtask 
- 		and it will be passed as an argument to func do_task in class Slave on slave host) 
- 		and then call func handle_result to deal with each result gotten from swarm. After 
- 		all result have been confirmed, this func will be called again to continue 
- 		generating new subtask list because you may need new subtasks depending on the 
- 		result gotten from swarm in previous iteration. So this func should return subtasks
- 		list or empty list if you think you do not need new subtasks to finish current task.
-		"""
-		pass
+    def generate_subtasks(self):
+        """
+        This function will be called to generate subtask list and it will be called in a
+         loop until it return an empty list. The Swarm framework will first call this func 
+         to get subtask list (item in the list should be a string describing one subtask 
+         and it will be passed as an argument to func do_task in class Slave on slave host) 
+         and then call func handle_result to deal with each result gotten from swarm. After 
+         all result have been confirmed, this func will be called again to continue 
+         generating new subtask list because you may need new subtasks depending on the 
+         result gotten from swarm in previous iteration. So this func should return subtasks
+         list or empty list if you think you do not need new subtasks to finish current task.
+        """
+        pass
 
-	def handle_result(self,result):
-		"""
-		This function will be called when swarm get a result from slave hosts. The result 
-		in arguments is a string returned by func do_task in your class Slave. You should 
-		to handle it by parse and store it here. A pymongo.collection.Collection object is 
-		provided in argument 'args' passed to func __init__. You can use this object by 
-		'args.coll' to operate the collection in MongoDB. This func should return nothing.
-		"""
-		pass
+    def handle_result(self,result):
+        """
+        This function will be called when swarm get a result from slave hosts. The result 
+        in arguments is a string returned by func do_task in your class Slave. You should 
+        to handle it by parse and store it here. A pymongo.collection.Collection object is 
+        provided in argument 'args' passed to func __init__. You can use this object by 
+        'args.coll' to operate the collection in MongoDB. This func should return nothing.
+        """
+        pass
 
-	def report(self):
-		"""
-		Do your final report or result export here. Use result you stored in this class or
-		database.
-		"""
-		pass
+    def report(self):
+        """
+        Do your final report or result export here. Use result you stored in this class or
+        database.
+        """
+        pass
 
 class Slave(object):
-	"""
-	Class Slave which will be instantiated to deal with subtask gotten from task queue and 
-	return result of subtask to master.
-	"""
-	def __init__(self, args):
-		"""
-		The args in arguments is an instance of argparse.Namespace and it stores all arguments
-		of swarm. It is same as args in Master but no db Objects. You can get value of attribute 
-		XX by simply using 'args.XX'. And you should do your module initialization for Slave here.
-		"""
-		super(Slave, self).__init__()
-		self._args = args
+    """
+    Class Slave which will be instantiated to deal with subtask gotten from task queue and 
+    return result of subtask to master.
+    """
+    def __init__(self, args):
+        """
+        The args in arguments is an instance of argparse.Namespace and it stores all arguments
+        of swarm. It is same as args in Master but no db Objects. You can get value of attribute 
+        XX by simply using 'args.XX'. And you should do your module initialization for Slave here.
+        """
+        super(Slave, self).__init__()
+        self._args = args
 
-	def do_task(self,task):
-		"""
-		This function will be called when swarm-s get a subtask from task queue. The task in 
-		arguments is an item in the list returned by func generate_subtasks of class Master.
-		You should return a string to describe the result and it will be passed to func 
-		handle_result in class Master.
-		"""
-		pass
-		
+    def do_task(self,task):
+        """
+        This function will be called when swarm-s get a subtask from task queue. The task in 
+        arguments is an item in the list returned by func generate_subtasks of class Master.
+        You should return a string to describe the result and it will be passed to func 
+        handle_result in class Master.
+        """
+        pass
+        
 
 

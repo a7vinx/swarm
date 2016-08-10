@@ -2,25 +2,25 @@
 # -*- coding: utf-8 -*-
 
 class SwarmBaseException(Exception):
-	pass
+    pass
 
 class SwarmUseException(SwarmBaseException):
-	pass
+    pass
 
 class SwarmNetException(SwarmBaseException):
-	pass
+    pass
 
 class SwarmParseException(SwarmBaseException):
-	pass
+    pass
 
 class SwarmModuleException(SwarmBaseException):
-	pass
+    pass
 
 class SwarmFileException(SwarmBaseException):
-	pass
+    pass
 
 class SwarmDBException(SwarmBaseException):
-	pass
+    pass
 
 class SwarmSlaveException(SwarmBaseException):
-	pass
+    pass
