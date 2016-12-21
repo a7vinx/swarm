@@ -34,7 +34,7 @@ def add_cli_args(cli_parser):
     intruder.add_argument('--int-body',dest='int_body',metavar='BODY',
             help='HTTP or HTTPS body. You can use indicator symbol in this option')
     intruder.add_argument('--int-payload',dest='int_payload',metavar='PAYLOAD',
-            help="The format should follow '@0@:PATH,@1@:NUM-NUM:CHARSET'")
+            help="The format should follow '@0@:PATH,@1@:CHARSET:NUM-NUM'")
     intruder.add_argument('--int-flag',dest='int_flags',metavar='FLAGS',
             help='Separated by double comma if you have multiple flags')
     intruder.add_argument('--int-timeout',dest='int_timeout',metavar='TIME',type=float,

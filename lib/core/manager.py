@@ -99,7 +99,7 @@ class MSwarmManager(SwarmManager):
         for cur_index,cur in enumerate(self._task_confirm_list):
             if cur==0:
                 tmptask=self._cur_task_list[cur_index]
-                LOG.debug('put task: %s'%tasklog.replace('\n',' '))
+                LOG.debug('put task: %s'%tmptask.replace('\n',' '))
                 self._task_queue.put(self._cur_task_list[cur_index])
 
 

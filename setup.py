@@ -7,7 +7,7 @@ with open('README.md') as f:
             version = '0.5.0',
 
             author = 'arvin.x',
-            author_email = 'arvin.x.ptr@gmail.com',
+            author_email = 'arvin.x@icloud.com',
             description = 'A modular distributed penetration testing tool',
             license = 'GPLv3',
             long_description = f.read(),

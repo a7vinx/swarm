@@ -183,8 +183,8 @@ Intruder:
   --int-body BODY       HTTP or HTTPS body. You can use indicator symbol in
                         this option
   --int-payload PAYLOAD
-                        The format should follow '@0@:PATH,@1@:NUM-
-                        NUM:CHARSET'
+                        The format should follow '@0@:PATH,@1@:CHARSET
+                        :NUM-NUM'
   --int-flag FLAGS      Separated by double comma if you have multiple flags
   --int-timeout TIME    Timeout option for intruder module
 
